@@ -1,0 +1,53 @@
+========================================================================================================================================================
+
+Para ejecutar el proyecto:
+"mvn spring-boot:run"
+
+========================================================================================================================================================
+Para tu caso con PostgreSQL <- Tenemos que acomodar esto bien, son solo ejemplos
+"application.properties"
+
+src/main/resources/application.properties
+
+CONFIGURACIÓN DE POSTGRESQL
+spring.datasource.url=jdbc:postgresql://localhost:5432/nautica
+spring.datasource.username=postgres
+spring.datasource.password=tu_password
+
+CONFIGURACIÓN JPA / HIBERNATE
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Puerto de la aplicación
+server.port=8080
+
+spring.datasource.url → conexión a tu base PostgreSQL.
+spring.datasource.username y password → credenciales de la DB.
+spring.jpa.hibernate.ddl-auto=update → crea o actualiza tablas según tus entidades.
+spring.jpa.show-sql=true → muestra las consultas SQL en la consola (útil en desarrollo).
+server.port=8080 → puerto donde corre tu backend.
+
+========================================================================================================================================================
+
+Estructura
+
+src/main/java/com/tuempresa/tuapp/
+ ├── controllers/      <-- Controladores REST
+ │      ClienteController.java
+ ├── models/           <-- Entidades JPA (tablas DB)
+ │      Cliente.java
+ ├── services/         <-- Lógica de negocio
+ │      ClienteService.java
+ ├── repositories/     <-- Interfaces para DB
+ │      ClienteRepository.java
+ └── TuAppApplication.java  <-- Clase principal (main)
+
+========================================================================================================================================================
+
+Capa	    | Anotación	                | Qué hace
+Modelo  	| @Entity	                | Representa tablas en DB
+Repositorio	| Extiende JpaRepository	| Acceso a la base de datos
+Servicio	| @Service	                | Lógica de negocio
+Controlador	| @RestController	        | Expone endpoints REST
+Aplicación	| @SpringBootApplication	| Punto de entrada de la app
