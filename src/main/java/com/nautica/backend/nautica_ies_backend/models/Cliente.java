@@ -9,7 +9,6 @@ import java.time.LocalDate;
 @Table(name = "clientes")
 public class Cliente {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_cliente")
@@ -23,7 +22,7 @@ public class Cliente {
 
     // ✅ ENUM como string (sin tipo nativo)
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_cliente", nullable = false)
+    @Column(name = "tipo_cliente", nullable = false, length = 20)
     private TipoCliente tipoCliente;
 
     @Column(name = "fecha_alta")

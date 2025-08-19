@@ -28,7 +28,7 @@ public class Usuario {
     private String telefono;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "rol_usuario") // tipo enum nativo
+    @Column(nullable = false, length = 20)
     private RolUsuario rol;
 
     private Boolean activo = true;
