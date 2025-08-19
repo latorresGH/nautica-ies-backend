@@ -1,49 +1,69 @@
+// src/main/java/com/nautica/backend/nautica_ies_backend/services/UsuarioService.java
 package com.nautica.backend.nautica_ies_backend.services;
 
+import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class UsuarioService {
 
     private final UsuarioRepository repo;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository repo) {
+    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public List<Usuario> listar() {
-        return repo.findAll();
-    }
-
-    public Usuario crear(Usuario usuario) {
-        // TODO: encripta contraseñas antes de guardar (BCrypt)
-        return repo.save(usuario);
+    public Page<Usuario> listar(int page, int size, Sort sort) {
+        return repo.findAll(PageRequest.of(page, size, sort));
     }
 
     public Usuario obtener(Long id) {
-        return repo.findById(id).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    }
+
+    public Usuario crear(Usuario usuario) {
+        usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
+        try {
+            return repo.save(usuario);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("DNI o correo ya existe.");
+        }
     }
 
     public Usuario actualizar(Long id, Usuario datos) {
-        Usuario usuario = obtener(id);
-        usuario.setNombre(datos.getNombre());
-        usuario.setApellido(datos.getApellido());
-        usuario.setCorreo(datos.getCorreo());
-        usuario.setTelefono(datos.getTelefono());
-        usuario.setDireccion(datos.getDireccion());
-        usuario.setLocalidad(datos.getLocalidad());
-        usuario.setProvincia(datos.getProvincia());
-        usuario.setRol(datos.getRol());
-        usuario.setActivo(datos.getActivo());
-        // TODO: si actualizás contraseña, encriptá
-        return repo.save(usuario);
+        Usuario u = obtener(id);
+        if (datos.getContrasena() != null && !datos.getContrasena().isBlank()) {
+            u.setContrasena(passwordEncoder.encode(datos.getContrasena()));
+        }
+        u.setNombre(datos.getNombre());
+        u.setApellido(datos.getApellido());
+        u.setCorreo(datos.getCorreo());
+        u.setTelefono(datos.getTelefono());
+        u.setDireccion(datos.getDireccion());
+        u.setLocalidad(datos.getLocalidad());
+        u.setProvincia(datos.getProvincia());
+        u.setRol(datos.getRol());
+        u.setActivo(datos.getActivo());
+        try {
+            return repo.save(u);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("DNI o correo ya existe.");
+        }
     }
 
     public void eliminar(Long id) {
+        if (!repo.existsById(id)) throw new ResourceNotFoundException("Usuario no encontrado");
         repo.deleteById(id);
+    }
+
+    public Usuario buscarPorCorreo(String correo) {
+        return repo.findByCorreo(correo).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 }

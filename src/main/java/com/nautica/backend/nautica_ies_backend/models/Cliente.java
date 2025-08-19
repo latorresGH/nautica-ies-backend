@@ -20,7 +20,6 @@ public class Cliente {
     @Column(name = "estado_cliente", nullable = false)
     private String estadoCliente;
 
-    // ✅ ENUM como string (sin tipo nativo)
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_cliente", nullable = false, length = 20)
     private TipoCliente tipoCliente;

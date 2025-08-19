@@ -1,6 +1,8 @@
 package com.nautica.backend.nautica_ies_backend.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDate;
 
 @Entity
@@ -13,8 +15,10 @@ public class Embarcacion {
     private Long idEmbarcacion;
 
     @Column(name = "num_matricula")
+    @NotBlank
     private String numMatricula;
 
+    @NotBlank
     private String nombre;
     @Column(name = "marca_casco")
     private String marcaCasco;
@@ -33,6 +37,7 @@ public class Embarcacion {
     private Integer potenciaMotor;
 
     @Column(name = "fecha_alta")
+    @NotBlank
     private LocalDate fechaAlta = LocalDate.now();
 
     @Column(name = "fecha_baja")

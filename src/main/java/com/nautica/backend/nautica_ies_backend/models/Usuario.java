@@ -1,7 +1,10 @@
 package com.nautica.backend.nautica_ies_backend.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "usuarios")
@@ -12,17 +15,27 @@ public class Usuario {
     @Column(name = "id_usuario")
     private Long idUsuario;
 
+    @NotBlank
     private String nombre;
+
+    @NotBlank
     private String apellido;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotBlank
     private String contrasena;
+
     private String direccion;
     private String localidad;
     private String provincia;
 
     @Column(unique = true, nullable = false)
+    @NotBlank
     private String dni;
 
     @Column(unique = true, nullable = false)
+    @Email
+    @NotBlank
     private String correo;
 
     private String telefono;
@@ -33,7 +46,6 @@ public class Usuario {
 
     private Boolean activo = true;
 
-    // getters/setters
     public Long getIdUsuario() {
         return idUsuario;
     }
