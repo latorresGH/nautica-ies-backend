@@ -1,15 +1,14 @@
 package com.nautica.backend.nautica_ies_backend.models;
 
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "clientes")
 public class Cliente {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,9 +21,9 @@ public class Cliente {
     @Column(name = "estado_cliente", nullable = false)
     private String estadoCliente;
 
+    // ✅ ENUM como string (sin tipo nativo)
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_cliente", columnDefinition = "tipo_cliente")
-    @Type(PostgreSQLEnumType.class)
+    @Column(name = "tipo_cliente", nullable = false)
     private TipoCliente tipoCliente;
 
     @Column(name = "fecha_alta")

@@ -1,9 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.models;
 
 import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "usuarios")
@@ -31,7 +29,6 @@ public class Usuario {
 
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "rol_usuario") // tipo enum nativo
-    @Type(PostgreSQLEnumType.class)
     private RolUsuario rol;
 
     private Boolean activo = true;
