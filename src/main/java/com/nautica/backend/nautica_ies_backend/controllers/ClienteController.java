@@ -1,8 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.controllers;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,11 +9,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.services.ClienteService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.util.UriComponentsBuilder;
+
 
 /**
  * Controlador REST para la gestión de clientes.
@@ -42,8 +46,15 @@ public class ClienteController {
      * @return Lista de clientes.
      */
     @GetMapping
-    public List<Cliente> listar() {
-        return service.listar();
+        public ResponseEntity<Page<Cliente>> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size,
+            @RequestParam(defaultValue = "idCliente,asc") String sort
+    ) {
+        String[] s = sort.split(",");
+        Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sortObj = Sort.by(dir, s[0]);
+        return ResponseEntity.ok(service.listar(page, size, sortObj));
     }
 
     /**
@@ -53,8 +64,19 @@ public class ClienteController {
      * @return Cliente correspondiente al ID.
      */
     @GetMapping("/{id}")
-    public Cliente obtener(@PathVariable Long id) {
-        return service.obtener(id);
+        public ResponseEntity<Cliente> obtener(@PathVariable Long id) {
+        return ResponseEntity.ok(service.obtener(id)); // 200 o 404 (via handler global)
+    }
+
+    /**
+     * Busca un cliente por su número de cliente.
+     *
+     * @param numCliente Número de cliente a buscar.
+     * @return Cliente correspondiente al número.
+     */
+    @GetMapping("/by-num")
+    public ResponseEntity<Cliente> porNumero(@RequestParam("valor") Integer numCliente) {
+        return ResponseEntity.ok(service.buscarPorNumero(numCliente));
     }
 
     /**
@@ -65,8 +87,13 @@ public class ClienteController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Cliente crear(@RequestBody Cliente cliente) {
-        return service.crear(cliente);
+        public ResponseEntity<Cliente> crear(@RequestBody @Valid Cliente cliente,
+                                         UriComponentsBuilder uriBuilder) {
+        Cliente creado = service.crear(cliente);
+        var location = uriBuilder.path("/api/clientes/{id}")
+                                 .buildAndExpand(creado.getIdCliente())
+                                 .toUri();
+        return ResponseEntity.created(location).body(creado); // 201 + Location header
     }
 
     /**
@@ -77,8 +104,9 @@ public class ClienteController {
      * @return Cliente actualizado.
      */
     @PutMapping("/{id}")
-    public Cliente actualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
-        return service.actualizar(id, cliente);
+    public ResponseEntity<Cliente> actualizar(@PathVariable Long id,
+                                              @RequestBody @Valid Cliente cliente) {
+        return ResponseEntity.ok(service.actualizar(id, cliente)); // 200
     }
 
     /**
@@ -88,7 +116,8 @@ public class ClienteController {
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long id) {
+        public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

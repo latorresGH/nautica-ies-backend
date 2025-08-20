@@ -18,6 +18,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @param correo Correo del usuario.
      * @return Un {@link Optional} que contiene el usuario si fue encontrado, o vacío si no existe.
      */
+
     Optional<Usuario> findByCorreo(String correo);
      /**
      * Verifica si ya existe un usuario con el DNI proporcionado.

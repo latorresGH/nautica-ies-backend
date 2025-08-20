@@ -3,6 +3,7 @@ package com.nautica.backend.nautica_ies_backend.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
+import java.util.Optional;
 
 /**
  * Repositorio JPA para la entidad {@link Cliente}.
@@ -18,4 +19,9 @@ import com.nautica.backend.nautica_ies_backend.models.Cliente;
  *     <li>...y muchos más.</li>
  * </ul>
  */
-public interface ClienteRepository extends JpaRepository<Cliente, Long> { }
+public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+    Optional<Cliente> findByNumCliente(Integer numCliente);
+    boolean existsByNumCliente(Integer numCliente);
+}
+
+

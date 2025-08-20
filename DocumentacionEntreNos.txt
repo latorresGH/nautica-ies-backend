@@ -51,3 +51,120 @@ Repositorio	| Extiende JpaRepository	| Acceso a la base de datos
 Servicio	| @Service	                | Lógica de negocio
 Controlador	| @RestController	        | Expone endpoints REST
 Aplicación	| @SpringBootApplication	| Punto de entrada de la app
+
+========================================================================================================================================================
+
+Como manejar los response de la api. 404, 200, 204, 500, Estructura
+
+Entender `ResponseEntity` y los códigos de estado HTTP es clave para hacer APIs limpias y profesionales.
+Te explico en orden 👇
+
+---
+
+ 🔹 ¿Qué es `ResponseEntity`?
+
+Es una clase de Spring que te permite **construir la respuesta HTTP completa**:
+
+* el **cuerpo** (lo que devuelves: JSON, String, objeto, etc.)
+* el **status code** (200, 201, 404, 500…)
+* los **headers** (opcional: Location, Authorization, etc.)
+
+Ejemplo básico:
+
+```java
+@GetMapping("/{id}")
+public ResponseEntity<Usuario> obtener(@PathVariable Long id) {
+    Usuario usuario = service.obtener(id);
+    return ResponseEntity.ok(usuario); // 200 OK con el usuario en el body
+}
+```
+
+---
+
+ 🔹 Principales códigos de estado HTTP
+
+Te los divido por categorías para que sepas cuándo usarlos 👇
+
+ ✅ 2xx – Éxito
+
+200 OK** → Operación exitosa (GET, PUT, DELETE).
+201 Created** → Se creó un recurso (POST). Generalmente se usa junto con un `Location` header que indica la URL del nuevo recurso.
+204 No Content** → Operación exitosa pero sin body (por ejemplo, al eliminar algo).
+
+ ⚠️ 4xx – Error del cliente
+
+400 Bad Request** → El cliente mandó datos inválidos (ej: JSON mal formado, validación que no pasa, enum inválido).
+401 Unauthorized** → No está autenticado (le falta login o token).
+403 Forbidden** → Está autenticado, pero **no tiene permisos**.
+404 Not Found** → No existe el recurso (ej: `/usuarios/99` y no hay ese ID).
+409 Conflict** → Conflicto con el estado actual (ej: insertar un DNI que ya existe en DB).
+
+ 💥 5xx – Error del servidor
+
+500 Internal Server Error** → Algo inesperado falló en el servidor (NullPointerException, error en DB, etc.).
+503 Service Unavailable** → El servicio no está disponible (poco común en APIs REST simples, más usado en balanceadores).
+
+---
+
+ 🔹 Ejemplos con `ResponseEntity`
+
+ GET (200 OK o 404 Not Found)
+
+```java
+@GetMapping("/{id}")
+public ResponseEntity<Usuario> obtener(@PathVariable Long id) {
+    return service.findById(id)
+        .map(ResponseEntity::ok) // 200 + usuario
+        .orElseGet(() -> ResponseEntity.notFound().build()); // 404
+}
+```
+
+ POST (201 Created o 409 Conflict)
+
+```java
+@PostMapping
+public ResponseEntity<Usuario> crear(@RequestBody Usuario usuario) {
+    if (service.existsByDni(usuario.getDni())) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                             .body(null); // 409 Conflict
+    }
+    Usuario creado = service.crear(usuario);
+    return ResponseEntity.status(HttpStatus.CREATED).body(creado); // 201
+}
+```
+
+ DELETE (204 No Content o 404 Not Found)
+
+```java
+@DeleteMapping("/{id}")
+public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    if (!service.existsById(id)) {
+        return ResponseEntity.notFound().build();
+    }
+    service.eliminar(id);
+    return ResponseEntity.noContent().build(); // 204
+}
+```
+
+---
+
+ 🔹 Resumen rápido (qué usar en cada caso)
+
+| Acción                             | Status recomendado            |
+| ---------------------------------- | ----------------------------- |
+| GET ok                             | **200 OK**                    |
+| GET recurso no existe              | **404 Not Found**             |
+| POST exitoso (crear)               | **201 Created**               |
+| POST con datos inválidos           | **400 Bad Request**           |
+| POST duplicado (ej: DNI ya existe) | **409 Conflict**              |
+| PUT/PATCH exitoso                  | **200 OK**                    |
+| DELETE exitoso                     | **204 No Content**            |
+| Error inesperado (server)          | **500 Internal Server Error** |
+
+---
+
+👉 La idea es: **4xx culpa del cliente** (mandó algo mal), **5xx culpa del servidor** (falló nuestro código o infra).
+
+---
+
+
