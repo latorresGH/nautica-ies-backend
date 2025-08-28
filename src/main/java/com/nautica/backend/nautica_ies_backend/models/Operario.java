@@ -1,5 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "operarios")
 @PrimaryKeyJoinColumn(name = "id_operario") // PK = FK a usuarios.id_usuario
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Operario extends Usuario {
 
     @NotBlank

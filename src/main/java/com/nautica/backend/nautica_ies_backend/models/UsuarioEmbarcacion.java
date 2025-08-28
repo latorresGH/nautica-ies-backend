@@ -11,6 +11,7 @@ import jakarta.persistence.*;
 @Table(name = "usuario_embarcaciones", uniqueConstraints = {
         @UniqueConstraint(name = "uk_usuario_embarcacion", columnNames = { "id_usuario", "id_embarcacion" })
 })
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class UsuarioEmbarcacion {
 
     @Id
@@ -20,6 +21,7 @@ public class UsuarioEmbarcacion {
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)
     @JsonIgnoreProperties({ "embaracaciones" }) // evita recursión; ajusta al nombre real del campo
+
     private Usuario usuario;
 
     @ManyToOne(optional = false)

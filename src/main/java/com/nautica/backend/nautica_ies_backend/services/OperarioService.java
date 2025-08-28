@@ -36,7 +36,7 @@ public class OperarioService {
 
     public Operario crear(Operario op) {
         // Forzar rol correcto y hashear contraseña (heredada de Usuario)
-        op.setRol(RolUsuario.OPERARIO);
+        op.setRol(RolUsuario.operario);
         op.setContrasena(passwordEncoder.encode(op.getContrasena()));
         try {
             return repo.save(op);
@@ -62,7 +62,7 @@ public class OperarioService {
         op.setProvincia(datos.getProvincia());
         op.setActivo(datos.getActivo());
         // Forzar rol correcto (no permitir cambiar a otro)
-        op.setRol(RolUsuario.OPERARIO);
+        op.setRol(RolUsuario.operario);
 
         // Específicos de Operario
         op.setLegajo(datos.getLegajo());

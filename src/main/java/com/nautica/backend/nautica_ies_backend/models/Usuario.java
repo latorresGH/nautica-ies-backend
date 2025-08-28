@@ -1,5 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -25,15 +27,16 @@ import jakarta.validation.constraints.NotBlank;
  * 
  * Contiene informacion personal, de contacto, de autenticacion y de rol.
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "tipo" // puedes cambiar este nombre si quieres
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = Cliente.class, name = "cliente"),
-    @JsonSubTypes.Type(value = Operario.class, name = "operario")
-})
+// @JsonTypeInfo(
+//     use = JsonTypeInfo.Id.NAME,
+//     include = JsonTypeInfo.As.PROPERTY,
+//     property = "tipo" // puedes cambiar este nombre si quieres
+// )
+// @JsonSubTypes({
+//     @JsonSubTypes.Type(value = Cliente.class, name = "cliente"),
+//     @JsonSubTypes.Type(value = Operario.class, name = "operario")
+// })
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -87,6 +90,7 @@ public abstract class Usuario {
     private Boolean activo = true;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private java.util.List<UsuarioEmbarcacion> embarcaciones = new java.util.ArrayList<>();
 
     /**
