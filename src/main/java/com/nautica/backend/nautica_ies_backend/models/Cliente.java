@@ -8,23 +8,19 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
+
 /**
  * Entidad que representa al Cliente en el sistema.
+ * Extiende de {@link Usuario}.
  */
 @Entity
 @Table(name = "clientes")
-public class Cliente {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_cliente")
-    private Long idCliente;
+@PrimaryKeyJoinColumn(name = "id_cliente") // PK = FK a usuarios.id_usuario
+public class Cliente extends Usuario {
 
     @Column(name = "num_cliente", unique = true, nullable = false)
     private Integer numCliente;
@@ -40,93 +36,50 @@ public class Cliente {
     private LocalDate fechaAlta = LocalDate.now();
 
     /**
-     *Relación 1:1 con Embarcacion (dueño de la FK)
-     */ 
+     * Relación 1:1 con Embarcacion (dueño de la FK).
+     */
     @OneToOne
     @JoinColumn(name = "id_embarcacion", unique = true)
     private Embarcacion embarcacion;
 
-    /**
-     * Obtener el ID único del cliente.
-     * @return idCliente
-     */
-    public Long getIdCliente() {
-        return idCliente;
-    }
-    /**
-     * Establece el ID del cliente.
-     * @param idCliente ID único a asignar al cliente.
-     */
-    public void setIdCliente(Long idCliente) {
-        this.idCliente = idCliente;
-    }
-    /**
-     * Obtiene el número identificador del cliente.
-     * @return numCliente.
-     */
+    // --- Getters & Setters ---
+
     public Integer getNumCliente() {
         return numCliente;
     }
-    /**
-     * Establece el número identificador del cliente.
-     * @param numCliente Numero del cliente.
-     */
+
     public void setNumCliente(Integer numCliente) {
         this.numCliente = numCliente;
     }
-    /**
-     * Obtiene el estado actual del cliente (example: activo, inactivo).
-     * @return estadoCliente
-     */
+
     public String getEstadoCliente() {
         return estadoCliente;
     }
-    /**
-     * Estable el estado actual del cliente.
-     * @param estadoCliente Estado a asignar al cliente.
-     */
+
     public void setEstadoCliente(String estadoCliente) {
         this.estadoCliente = estadoCliente;
     }
-    /**
-     * Obtiene el tipo de cliente (particular, empresa, ect).
-     * @return tipoCliente
-     */
+
     public TipoCliente getTipoCliente() {
         return tipoCliente;
     }
-    /**
-     * Establece el tipo de cliente
-     * @param tipoCliente Tipo a asignar al cliente.
-     */
+
     public void setTipoCliente(TipoCliente tipoCliente) {
         this.tipoCliente = tipoCliente;
     }
-    /**
-     * Obtiene la fecha de alta del cliente en el sistema.
-     * @return fechaAlta
-     */
+
     public LocalDate getFechaAlta() {
         return fechaAlta;
     }
-    /**
-     * Establece la fecha de alta del cliente.
-     * @param fechaAlta Fecha en la que se dio de alta el cliente.
-     */
+
     public void setFechaAlta(LocalDate fechaAlta) {
         this.fechaAlta = fechaAlta;
     }
-    /**
-     * Obtiene la embarcación asociada al cliente.
-     * @return
-     */
+
     public Embarcacion getEmbarcacion() {
         return embarcacion;
     }
-    /**
-     * Asocia una embarcación al cliente.
-     * @param embarcacion Embarcación a asociar.
-     */
+
     public void setEmbarcacion(Embarcacion embarcacion) {
         this.embarcacion = embarcacion;
     }

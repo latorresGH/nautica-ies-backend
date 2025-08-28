@@ -20,7 +20,7 @@ import jakarta.validation.constraints.NotBlank;
  */
 @Entity
 @Table(name = "usuarios")
-public class Usuario {
+public abstract class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
