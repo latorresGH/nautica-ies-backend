@@ -3,6 +3,7 @@ package com.nautica.backend.nautica_ies_backend.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,9 +11,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+
 /**
  * Entidad que representa un usuario del sistema.
  * 
@@ -20,6 +26,7 @@ import jakarta.validation.constraints.NotBlank;
  */
 @Entity
 @Table(name = "usuarios")
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Usuario {
 
     @Id
@@ -67,7 +74,10 @@ public abstract class Usuario {
      * Indica si el usuario está activo en el sistema.
      */
     private Boolean activo = true;
-    
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<UsuarioEmbarcacion> embarcaciones = new java.util.ArrayList<>();
+
     /**
      * Obtiene el ID único del usuario.
      *
@@ -280,9 +290,27 @@ public abstract class Usuario {
     /**
      * Establece el estado de actividad del usuario.
      *
-     * @param activo true si el usuario debe estar activo, false si debe estar inactivo.
+     * @param activo true si el usuario debe estar activo, false si debe estar
+     *               inactivo.
      */
     public void setActivo(Boolean activo) {
         this.activo = activo;
+    }
+
+    /**
+     * Obtiene la lista de embarcaciones asociadas al usuario.
+     * @return Lista de embarcaciones.
+     * 
+     */
+    public java.util.List<UsuarioEmbarcacion> getEmbarcaciones() {
+        return embarcaciones;
+    }
+
+    /**
+     * Establece la lista de embarcaciones asociadas al usuario.
+     * @param embarcaciones
+     */
+    public void setEmbarcaciones(java.util.List<UsuarioEmbarcacion> embarcaciones) {
+        this.embarcaciones = embarcaciones;
     }
 }
