@@ -42,7 +42,7 @@ public class Cliente extends Usuario {
     @JoinColumn(name = "id_embarcacion", unique = true)
     private Embarcacion embarcacion;
 
-    // --- Getters & Setters ---
+    
 
     public Integer getNumCliente() {
         return numCliente;
