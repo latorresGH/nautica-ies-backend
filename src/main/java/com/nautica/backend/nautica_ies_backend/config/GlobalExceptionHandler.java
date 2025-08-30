@@ -3,7 +3,7 @@ package com.nautica.backend.nautica_ies_backend.config;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
-import jakarta.servlet.http.HttpServletRequest; // <-- este es el import correcto
+
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
