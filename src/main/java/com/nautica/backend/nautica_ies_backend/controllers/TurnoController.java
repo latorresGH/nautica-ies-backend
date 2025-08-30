@@ -45,8 +45,8 @@ public class TurnoController {
 
   @GetMapping("/operario/{idOperario}")
   public ResponseEntity<List<Turno>> porOperarioEnRango(@PathVariable Long idOperario,
-                                                        @RequestParam LocalDate from,
-                                                        @RequestParam LocalDate to) {
+      @RequestParam LocalDate from,
+      @RequestParam LocalDate to) {
     return ResponseEntity.ok(service.listarPorOperarioEnRango(idOperario, from, to));
   }
 

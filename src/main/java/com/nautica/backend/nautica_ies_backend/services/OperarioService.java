@@ -76,7 +76,8 @@ public class OperarioService {
     }
 
     public void eliminar(Long id) {
-        if (!repo.existsById(id)) throw new ResourceNotFoundException("Operario no encontrado");
+        if (!repo.existsById(id))
+            throw new ResourceNotFoundException("Operario no encontrado");
         repo.deleteById(id);
     }
 }

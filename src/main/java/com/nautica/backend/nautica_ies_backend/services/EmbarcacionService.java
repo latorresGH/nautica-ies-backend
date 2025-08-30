@@ -96,9 +96,9 @@ public class EmbarcacionService {
                 });
 
         // (Opcional) regla: un solo PROPIETARIO activo por embarcación
-        if (rol == RolEnEmbarcacion.PROPIETARIO) {
+        if (rol == RolEnEmbarcacion.propietario) {
             boolean yaHayPropietario = ueRepo.findByEmbarcacion_IdEmbarcacion(idEmbarcacion).stream()
-                    .anyMatch(x -> x.getRolEnEmbarcacion() == RolEnEmbarcacion.PROPIETARIO && x.getHasta() == null);
+                    .anyMatch(x -> x.getRolEnEmbarcacion() == RolEnEmbarcacion.propietario && x.getHasta() == null);
             if (yaHayPropietario)
                 throw new IllegalArgumentException("La embarcación ya tiene un propietario activo");
         }

@@ -47,7 +47,7 @@ public class TareaService {
             throw new IllegalArgumentException("Debe indicar el operario (idUsuario)");
         }
         Operario op = operarioRepo.findById(t.getOperario().getIdUsuario())
-                                  .orElseThrow(() -> new ResourceNotFoundException("Operario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Operario no encontrado"));
         t.setOperario(op);
         try {
             return repo.save(t);
@@ -67,7 +67,7 @@ public class TareaService {
 
         if (datos.getOperario() != null && datos.getOperario().getIdUsuario() != null) {
             Operario op = operarioRepo.findById(datos.getOperario().getIdUsuario())
-                                      .orElseThrow(() -> new ResourceNotFoundException("Operario no encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Operario no encontrado"));
             t.setOperario(op);
         }
 
@@ -79,7 +79,8 @@ public class TareaService {
     }
 
     public void eliminar(Long id) {
-        if (!repo.existsById(id)) throw new ResourceNotFoundException("Tarea no encontrada");
+        if (!repo.existsById(id))
+            throw new ResourceNotFoundException("Tarea no encontrada");
         repo.deleteById(id);
     }
 }

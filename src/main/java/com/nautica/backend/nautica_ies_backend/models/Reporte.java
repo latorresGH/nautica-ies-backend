@@ -38,20 +38,47 @@ public class Reporte {
     private String archivoDireccion;
 
     // Getters y Setters
-    public Long getIdReporte() { return idReporte; }
+    public Long getIdReporte() {
+        return idReporte;
+    }
 
-    public String getNombreReporte() { return nombreReporte; }
-    public void setNombreReporte(String nombreReporte) { this.nombreReporte = nombreReporte; }
+    public String getNombreReporte() {
+        return nombreReporte;
+    }
 
-    public String getAreaResponsable() { return areaResponsable; }
-    public void setAreaResponsable(String areaResponsable) { this.areaResponsable = areaResponsable; }
+    public void setNombreReporte(String nombreReporte) {
+        this.nombreReporte = nombreReporte;
+    }
 
-    public String getFormato() { return formato; }
-    public void setFormato(String formato) { this.formato = formato; }
+    public String getAreaResponsable() {
+        return areaResponsable;
+    }
 
-    public LocalDate getFechaGeneracion() { return fechaGeneracion; }
-    public void setFechaGeneracion(LocalDate fechaGeneracion) { this.fechaGeneracion = fechaGeneracion; }
+    public void setAreaResponsable(String areaResponsable) {
+        this.areaResponsable = areaResponsable;
+    }
 
-    public String getArchivoDireccion() { return archivoDireccion; }
-    public void setArchivoDireccion(String archivoDireccion) { this.archivoDireccion = archivoDireccion; }
+    public String getFormato() {
+        return formato;
+    }
+
+    public void setFormato(String formato) {
+        this.formato = formato;
+    }
+
+    public LocalDate getFechaGeneracion() {
+        return fechaGeneracion;
+    }
+
+    public void setFechaGeneracion(LocalDate fechaGeneracion) {
+        this.fechaGeneracion = fechaGeneracion;
+    }
+
+    public String getArchivoDireccion() {
+        return archivoDireccion;
+    }
+
+    public void setArchivoDireccion(String archivoDireccion) {
+        this.archivoDireccion = archivoDireccion;
+    }
 }

@@ -16,13 +16,11 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "turnos",
-    indexes = {
-      @Index(name = "idx_turno_fecha", columnList = "fecha_turno"),
-      @Index(name = "idx_turno_cliente", columnList = "id_cliente"),
-      @Index(name = "idx_turno_operario", columnList = "id_operario")
-    }
-)
+@Table(name = "turnos", indexes = {
+    @Index(name = "idx_turno_fecha", columnList = "fecha_turno"),
+    @Index(name = "idx_turno_cliente", columnList = "id_cliente"),
+    @Index(name = "idx_turno_operario", columnList = "id_operario")
+})
 public class Turno {
 
   @Id
@@ -55,24 +53,59 @@ public class Turno {
   private Operario operario;
 
   // getters/setters
-  public Long getIdTurno() { return id; }
-  public void setId(Long id) { this.id = id; }
+  public Long getIdTurno() {
+    return id;
+  }
 
-  public LocalDate getFecha() { return fecha; }
-  public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-  public LocalTime getHoraInicio() { return horaInicio; }
-  public void setHoraInicio(LocalTime horaInicio) { this.horaInicio = horaInicio; }
+  public LocalDate getFecha() {
+    return fecha;
+  }
 
-  public LocalTime getHoraFin() { return horaFin; }
-  public void setHoraFin(LocalTime horaFin) { this.horaFin = horaFin; }
+  public void setFecha(LocalDate fecha) {
+    this.fecha = fecha;
+  }
 
-  public Cliente getCliente() { return cliente; }
-  public void setCliente(Cliente cliente) { this.cliente = cliente; }
+  public LocalTime getHoraInicio() {
+    return horaInicio;
+  }
 
-  public Embarcacion getEmbarcacion() { return embarcacion; }
-  public void setEmbarcacion(Embarcacion embarcacion) { this.embarcacion = embarcacion; }
+  public void setHoraInicio(LocalTime horaInicio) {
+    this.horaInicio = horaInicio;
+  }
 
-  public Operario getOperario() { return operario; }
-  public void setOperario(Operario operario) { this.operario = operario; }
+  public LocalTime getHoraFin() {
+    return horaFin;
+  }
+
+  public void setHoraFin(LocalTime horaFin) {
+    this.horaFin = horaFin;
+  }
+
+  public Cliente getCliente() {
+    return cliente;
+  }
+
+  public void setCliente(Cliente cliente) {
+    this.cliente = cliente;
+  }
+
+  public Embarcacion getEmbarcacion() {
+    return embarcacion;
+  }
+
+  public void setEmbarcacion(Embarcacion embarcacion) {
+    this.embarcacion = embarcacion;
+  }
+
+  public Operario getOperario() {
+    return operario;
+  }
+
+  public void setOperario(Operario operario) {
+    this.operario = operario;
+  }
 }

@@ -6,8 +6,7 @@ import jakarta.validation.constraints.Min;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "horarios_operacion",
-       uniqueConstraints = @UniqueConstraint(name = "uk_horario_dia", columnNames = "dia_semana"))
+@Table(name = "horarios_operacion", uniqueConstraints = @UniqueConstraint(name = "uk_horario_dia", columnNames = "dia_semana"))
 public class HorarioOperacion {
 
     @Id
@@ -15,7 +14,8 @@ public class HorarioOperacion {
     @Column(name = "id_horario")
     private Long id;
 
-    @Min(1) @Max(7)
+    @Min(1)
+    @Max(7)
     @Column(name = "dia_semana", nullable = false)
     private Integer diaSemana; // 1=lunes ... 7=domingo
 
@@ -29,13 +29,39 @@ public class HorarioOperacion {
     private LocalTime horaCierre;
 
     // getters / setters
-    public Long getId() { return id; }
-    public Integer getDiaSemana() { return diaSemana; }
-    public void setDiaSemana(Integer diaSemana) { this.diaSemana = diaSemana; }
-    public Boolean getAbierto() { return abierto; }
-    public void setAbierto(Boolean abierto) { this.abierto = abierto; }
-    public LocalTime getHoraApertura() { return horaApertura; }
-    public void setHoraApertura(LocalTime horaApertura) { this.horaApertura = horaApertura; }
-    public LocalTime getHoraCierre() { return horaCierre; }
-    public void setHoraCierre(LocalTime horaCierre) { this.horaCierre = horaCierre; }
+    public Long getId() {
+        return id;
+    }
+
+    public Integer getDiaSemana() {
+        return diaSemana;
+    }
+
+    public void setDiaSemana(Integer diaSemana) {
+        this.diaSemana = diaSemana;
+    }
+
+    public Boolean getAbierto() {
+        return abierto;
+    }
+
+    public void setAbierto(Boolean abierto) {
+        this.abierto = abierto;
+    }
+
+    public LocalTime getHoraApertura() {
+        return horaApertura;
+    }
+
+    public void setHoraApertura(LocalTime horaApertura) {
+        this.horaApertura = horaApertura;
+    }
+
+    public LocalTime getHoraCierre() {
+        return horaCierre;
+    }
+
+    public void setHoraCierre(LocalTime horaCierre) {
+        this.horaCierre = horaCierre;
+    }
 }

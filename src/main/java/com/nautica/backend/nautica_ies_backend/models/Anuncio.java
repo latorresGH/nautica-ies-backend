@@ -41,23 +41,55 @@ public class Anuncio {
     private String destinatarios;
 
     // Getters y Setters
-    public Long getIdAnuncio() { return idAnuncio; }
+    public Long getIdAnuncio() {
+        return idAnuncio;
+    }
 
-    public String getTitulo() { return titulo; }
-    public void setTitulo(String titulo) { this.titulo = titulo; }
+    public String getTitulo() {
+        return titulo;
+    }
 
-    public String getMensaje() { return mensaje; }
-    public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
 
-    public LocalDate getFechaPublicacion() { return fechaPublicacion; }
-    public void setFechaPublicacion(LocalDate fechaPublicacion) { this.fechaPublicacion = fechaPublicacion; }
+    public String getMensaje() {
+        return mensaje;
+    }
 
-    public LocalDate getFechaExpiracion() { return fechaExpiracion; }
-    public void setFechaExpiracion(LocalDate fechaExpiracion) { this.fechaExpiracion = fechaExpiracion; }
+    public void setMensaje(String mensaje) {
+        this.mensaje = mensaje;
+    }
 
-    public LocalTime getHoraPublicacion() { return horaPublicacion; }
-    public void setHoraPublicacion(LocalTime horaPublicacion) { this.horaPublicacion = horaPublicacion; }
+    public LocalDate getFechaPublicacion() {
+        return fechaPublicacion;
+    }
 
-    public String getDestinatarios() { return destinatarios; }
-    public void setDestinatarios(String destinatarios) { this.destinatarios = destinatarios; }
+    public void setFechaPublicacion(LocalDate fechaPublicacion) {
+        this.fechaPublicacion = fechaPublicacion;
+    }
+
+    public LocalDate getFechaExpiracion() {
+        return fechaExpiracion;
+    }
+
+    public void setFechaExpiracion(LocalDate fechaExpiracion) {
+        this.fechaExpiracion = fechaExpiracion;
+    }
+
+    public LocalTime getHoraPublicacion() {
+        return horaPublicacion;
+    }
+
+    public void setHoraPublicacion(LocalTime horaPublicacion) {
+        this.horaPublicacion = horaPublicacion;
+    }
+
+    public String getDestinatarios() {
+        return destinatarios;
+    }
+
+    public void setDestinatarios(String destinatarios) {
+        this.destinatarios = destinatarios;
+    }
 }

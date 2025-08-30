@@ -22,8 +22,7 @@ public class CalendarioController {
     @GetMapping
     public ResponseEntity<List<CalendarioService.DiaDTO>> getCalendario(
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam("to")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
-    ) {
+            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(service.calendario(from, to));
     }
 }

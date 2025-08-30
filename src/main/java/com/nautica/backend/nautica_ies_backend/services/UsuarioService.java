@@ -13,9 +13,11 @@ import com.nautica.backend.nautica_ies_backend.models.Usuario;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 
 /**
- * Servicio que gestiona la lógica de negocio relacionada con la entidad {@link Usuario}.
+ * Servicio que gestiona la lógica de negocio relacionada con la entidad
+ * {@link Usuario}.
  * <p>
- * Se encarga de operaciones como listar usuarios paginados, crear, actualizar, eliminar y buscar por correo.
+ * Se encarga de operaciones como listar usuarios paginados, crear, actualizar,
+ * eliminar y buscar por correo.
  */
 @Service
 public class UsuarioService {
@@ -24,17 +26,18 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Constructor que inyecta el repositorio de usuarios y el codificador de contraseñas.
+     * Constructor que inyecta el repositorio de usuarios y el codificador de
+     * contraseñas.
      *
-     * @param repo             Repositorio de usuarios.
-     * @param passwordEncoder  Codificador de contraseñas.
+     * @param repo            Repositorio de usuarios.
+     * @param passwordEncoder Codificador de contraseñas.
      */
     public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
     }
 
-     /**
+    /**
      * Retorna una lista paginada de usuarios con ordenamiento.
      *
      * @param page Número de página (0-index).
@@ -57,7 +60,7 @@ public class UsuarioService {
         return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
-     /**
+    /**
      * Crea un nuevo usuario y codifica su contraseña antes de guardarlo.
      * 
      * @param usuario Usuario a crear.
@@ -109,7 +112,8 @@ public class UsuarioService {
      * @throws ResourceNotFoundException si el usuario no existe.
      */
     public void eliminar(Long id) {
-        if (!repo.existsById(id)) throw new ResourceNotFoundException("Usuario no encontrado");
+        if (!repo.existsById(id))
+            throw new ResourceNotFoundException("Usuario no encontrado");
         repo.deleteById(id);
     }
 

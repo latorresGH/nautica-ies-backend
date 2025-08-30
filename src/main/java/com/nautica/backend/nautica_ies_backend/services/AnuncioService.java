@@ -47,7 +47,8 @@ public class AnuncioService {
     }
 
     public void eliminar(Long id) {
-        if (!repo.existsById(id)) throw new ResourceNotFoundException("Anuncio no encontrado");
+        if (!repo.existsById(id))
+            throw new ResourceNotFoundException("Anuncio no encontrado");
         repo.deleteById(id);
     }
 }

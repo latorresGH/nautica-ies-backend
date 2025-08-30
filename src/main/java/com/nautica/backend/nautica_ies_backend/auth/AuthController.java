@@ -15,8 +15,8 @@ public class AuthController {
     private final JwtService jwtService;
 
     public AuthController(AuthenticationManager authManager,
-                          UserDetailsService uds,
-                          JwtService jwtService) {
+            UserDetailsService uds,
+            JwtService jwtService) {
         this.authManager = authManager;
         this.userDetailsService = uds;
         this.jwtService = jwtService;
@@ -29,8 +29,7 @@ public class AuthController {
 
         var user = userDetailsService.loadUserByUsername(request.username());
         var access = jwtService.generateAccessToken(user, java.util.Map.of(
-                "rol", user.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER")
-        ));
+                "rol", user.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER")));
         var refresh = jwtService.generateRefreshToken(user);
         return new JwtResponse(access, refresh);
     }

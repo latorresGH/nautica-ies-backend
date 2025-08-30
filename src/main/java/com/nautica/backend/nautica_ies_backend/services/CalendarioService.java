@@ -22,15 +22,16 @@ public class CalendarioService {
         this.excepcionRepo = excepcionRepo;
     }
 
-    public static record DiaDTO(LocalDate fecha, boolean abierto, LocalTime horaApertura, LocalTime horaCierre, String motivoExcepcion) {}
+    public static record DiaDTO(LocalDate fecha, boolean abierto, LocalTime horaApertura, LocalTime horaCierre,
+            String motivoExcepcion) {
+    }
 
     public List<DiaDTO> calendario(LocalDate desde, LocalDate hasta) {
-        if (hasta.isBefore(desde)) throw new IllegalArgumentException("Rango inválido");
+        if (hasta.isBefore(desde))
+            throw new IllegalArgumentException("Rango inválido");
 
-        
         Map<Integer, HorarioOperacion> horarios = new HashMap<>();
         horarioRepo.findAll().forEach(h -> horarios.put(h.getDiaSemana(), h));
-
 
         // excepciones en el rango
         Map<LocalDate, CierreExcepcional> exc = new HashMap<>();
@@ -46,8 +47,7 @@ public class CalendarioService {
                         e.getAbierto(),
                         e.getHoraApertura(),
                         e.getHoraCierre(),
-                        e.getMotivo()
-                ));
+                        e.getMotivo()));
             } else {
                 int dow = mapTo1to7(f.getDayOfWeek());
                 HorarioOperacion h = horarios.get(dow);
@@ -60,8 +60,7 @@ public class CalendarioService {
                             Boolean.TRUE.equals(h.getAbierto()),
                             h.getHoraApertura(),
                             h.getHoraCierre(),
-                            null
-                    ));
+                            null));
                 }
             }
         }

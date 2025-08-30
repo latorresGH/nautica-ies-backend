@@ -11,16 +11,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @Entity
-@Table(
-    name = "cuotas",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_cuota_cli_emb_mes", columnNames = {"id_cliente", "id_embarcacion", "numero_mes"})
-    },
-    indexes = {
+@Table(name = "cuotas", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_cuota_cli_emb_mes", columnNames = { "id_cliente", "id_embarcacion", "numero_mes" })
+}, indexes = {
         @Index(name = "ix_cuota_cli_mes", columnList = "id_cliente,numero_mes"),
         @Index(name = "ix_cuota_emb_mes", columnList = "id_embarcacion,numero_mes")
-    }
-)
+})
 public class Cuota {
 
     @Id
@@ -62,29 +58,71 @@ public class Cuota {
     private EstadoCuota estadoCuota; // PENDIENTE/PAGADA/VENCIDA
 
     // Getters & setters
-    public Long getIdCuota() { return idCuota; }
+    public Long getIdCuota() {
+        return idCuota;
+    }
 
-    public Integer getNumeroPago() { return numeroPago; }
-    public void setNumeroPago(Integer numeroPago) { this.numeroPago = numeroPago; }
+    public Integer getNumeroPago() {
+        return numeroPago;
+    }
 
-    public LocalDate getNumeroMes() { return numeroMes; }
-    public void setNumeroMes(LocalDate numeroMes) { this.numeroMes = numeroMes; }
+    public void setNumeroPago(Integer numeroPago) {
+        this.numeroPago = numeroPago;
+    }
 
-    public LocalDate getFechaPago() { return fechaPago; }
-    public void setFechaPago(LocalDate fechaPago) { this.fechaPago = fechaPago; }
+    public LocalDate getNumeroMes() {
+        return numeroMes;
+    }
 
-    public BigDecimal getMonto() { return monto; }
-    public void setMonto(BigDecimal monto) { this.monto = monto; }
+    public void setNumeroMes(LocalDate numeroMes) {
+        this.numeroMes = numeroMes;
+    }
 
-    public Cliente getCliente() { return cliente; }
-    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+    public LocalDate getFechaPago() {
+        return fechaPago;
+    }
 
-    public Embarcacion getEmbarcacion() { return embarcacion; }
-    public void setEmbarcacion(Embarcacion embarcacion) { this.embarcacion = embarcacion; }
+    public void setFechaPago(LocalDate fechaPago) {
+        this.fechaPago = fechaPago;
+    }
 
-    public FormaPago getFormaPago() { return formaPago; }
-    public void setFormaPago(FormaPago formaPago) { this.formaPago = formaPago; }
+    public BigDecimal getMonto() {
+        return monto;
+    }
 
-    public EstadoCuota getEstadoCuota() { return estadoCuota; }
-    public void setEstadoCuota(EstadoCuota estadoCuota) { this.estadoCuota = estadoCuota; }
+    public void setMonto(BigDecimal monto) {
+        this.monto = monto;
+    }
+
+    public Cliente getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+    }
+
+    public Embarcacion getEmbarcacion() {
+        return embarcacion;
+    }
+
+    public void setEmbarcacion(Embarcacion embarcacion) {
+        this.embarcacion = embarcacion;
+    }
+
+    public FormaPago getFormaPago() {
+        return formaPago;
+    }
+
+    public void setFormaPago(FormaPago formaPago) {
+        this.formaPago = formaPago;
+    }
+
+    public EstadoCuota getEstadoCuota() {
+        return estadoCuota;
+    }
+
+    public void setEstadoCuota(EstadoCuota estadoCuota) {
+        this.estadoCuota = estadoCuota;
+    }
 }

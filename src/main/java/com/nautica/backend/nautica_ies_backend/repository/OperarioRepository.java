@@ -7,5 +7,6 @@ import com.nautica.backend.nautica_ies_backend.models.Operario;
 
 public interface OperarioRepository extends JpaRepository<Operario, Long> {
     Optional<Operario> findByLegajo(String legajo);
+
     boolean existsByLegajo(String legajo);
 }

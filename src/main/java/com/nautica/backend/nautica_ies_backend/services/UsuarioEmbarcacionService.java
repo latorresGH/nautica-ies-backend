@@ -25,8 +25,8 @@ public class UsuarioEmbarcacionService {
     private final EmbarcacionRepository embarcacionRepo;
 
     public UsuarioEmbarcacionService(UsuarioEmbarcacionRepository repo,
-                                     UsuarioRepository usuarioRepo,
-                                     EmbarcacionRepository embarcacionRepo) {
+            UsuarioRepository usuarioRepo,
+            EmbarcacionRepository embarcacionRepo) {
         this.repo = repo;
         this.usuarioRepo = usuarioRepo;
         this.embarcacionRepo = embarcacionRepo;
@@ -48,13 +48,14 @@ public class UsuarioEmbarcacionService {
 
     public List<UsuarioEmbarcacion> listarPorEmbarcacion(Long idEmbarcacion) {
         // valida existencia (opcional)
-        embarcacionRepo.findById(idEmbarcacion).orElseThrow(() -> new ResourceNotFoundException("Embarcación no encontrada"));
+        embarcacionRepo.findById(idEmbarcacion)
+                .orElseThrow(() -> new ResourceNotFoundException("Embarcación no encontrada"));
         return repo.findByEmbarcacion_IdEmbarcacion(idEmbarcacion);
     }
 
     @Transactional
     public UsuarioEmbarcacion crear(Long idUsuario, Long idEmbarcacion, RolEnEmbarcacion rol,
-                                    LocalDate desde, LocalDate hasta) {
+            LocalDate desde, LocalDate hasta) {
         Usuario usuario = usuarioRepo.findById(idUsuario)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         Embarcacion embarcacion = embarcacionRepo.findById(idEmbarcacion)
@@ -62,13 +63,16 @@ public class UsuarioEmbarcacionService {
 
         // evitar duplicados
         repo.findByUsuario_IdUsuarioAndEmbarcacion_IdEmbarcacion(idUsuario, idEmbarcacion)
-            .ifPresent(x -> { throw new IllegalArgumentException("El usuario ya está asignado a esta embarcación"); });
+                .ifPresent(x -> {
+                    throw new IllegalArgumentException("El usuario ya está asignado a esta embarcación");
+                });
 
         // (opcional) regla: un solo PROPIETARIO activo por embarcación
-        if (rol == RolEnEmbarcacion.PROPIETARIO) {
+        if (rol == RolEnEmbarcacion.propietario) {
             boolean yaHayPropietario = repo.findByEmbarcacion_IdEmbarcacion(idEmbarcacion).stream()
-                    .anyMatch(x -> x.getRolEnEmbarcacion() == RolEnEmbarcacion.PROPIETARIO && x.getHasta() == null);
-            if (yaHayPropietario) throw new IllegalArgumentException("La embarcación ya tiene un propietario activo");
+                    .anyMatch(x -> x.getRolEnEmbarcacion() == RolEnEmbarcacion.propietario && x.getHasta() == null);
+            if (yaHayPropietario)
+                throw new IllegalArgumentException("La embarcación ya tiene un propietario activo");
         }
 
         UsuarioEmbarcacion ue = new UsuarioEmbarcacion();
@@ -86,24 +90,28 @@ public class UsuarioEmbarcacionService {
         UsuarioEmbarcacion ue = obtener(id);
 
         // Si cambian a PROPIETARIO, validar regla (solo 1 activo)
-        if (rol == RolEnEmbarcacion.PROPIETARIO && ue.getRolEnEmbarcacion() != RolEnEmbarcacion.PROPIETARIO) {
+        if (rol == RolEnEmbarcacion.propietario && ue.getRolEnEmbarcacion() != RolEnEmbarcacion.propietario) {
             Long idEmbarcacion = ue.getEmbarcacion().getIdEmbarcacion();
             boolean yaHayPropietario = repo.findByEmbarcacion_IdEmbarcacion(idEmbarcacion).stream()
                     .anyMatch(x -> !x.getId().equals(id) &&
-                                   x.getRolEnEmbarcacion() == RolEnEmbarcacion.PROPIETARIO &&
-                                   x.getHasta() == null);
-            if (yaHayPropietario) throw new IllegalArgumentException("La embarcación ya tiene un propietario activo");
+                            x.getRolEnEmbarcacion() == RolEnEmbarcacion.propietario &&
+                            x.getHasta() == null);
+            if (yaHayPropietario)
+                throw new IllegalArgumentException("La embarcación ya tiene un propietario activo");
         }
 
-        if (rol != null)   ue.setRolEnEmbarcacion(rol);
-        if (desde != null) ue.setDesde(desde);
+        if (rol != null)
+            ue.setRolEnEmbarcacion(rol);
+        if (desde != null)
+            ue.setDesde(desde);
         ue.setHasta(hasta); // permite setear null para “sin fin”
 
         return repo.save(ue);
     }
 
     public void eliminar(Long id) {
-        if (!repo.existsById(id)) throw new ResourceNotFoundException("Relación no encontrada");
+        if (!repo.existsById(id))
+            throw new ResourceNotFoundException("Relación no encontrada");
         repo.deleteById(id);
     }
 }

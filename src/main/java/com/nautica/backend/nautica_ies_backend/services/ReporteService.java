@@ -46,7 +46,8 @@ public class ReporteService {
     }
 
     public void eliminar(Long id) {
-        if (!repo.existsById(id)) throw new ResourceNotFoundException("Reporte no encontrado");
+        if (!repo.existsById(id))
+            throw new ResourceNotFoundException("Reporte no encontrado");
         repo.deleteById(id);
     }
 }

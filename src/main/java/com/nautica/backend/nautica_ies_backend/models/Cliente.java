@@ -43,7 +43,6 @@ public class Cliente extends Usuario {
     @OneToOne
     @JoinColumn(name = "id_embarcacion", unique = true)
     private Embarcacion embarcacion;
-
     
 
     public Integer getNumCliente() {

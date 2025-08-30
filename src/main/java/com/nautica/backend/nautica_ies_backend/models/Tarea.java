@@ -1,5 +1,6 @@
 // src/main/java/com/nautica/backend/nautica_ies_backend/models/Tarea.java
 package com.nautica.backend.nautica_ies_backend.models;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -19,10 +20,9 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(
-    name = "tarea", // si la tabla es "Tarea" con mayúscula, Postgres la crea en minúsculas salvo comillas; usa el nombre real
-    uniqueConstraints = @UniqueConstraint(name = "uk_tarea_numero", columnNames = "numero_tarea")
-)
+@Table(name = "tarea", // si la tabla es "Tarea" con mayúscula, Postgres la crea en minúsculas salvo
+                       // comillas; usa el nombre real
+        uniqueConstraints = @UniqueConstraint(name = "uk_tarea_numero", columnNames = "numero_tarea"))
 public class Tarea {
 
     @Id
@@ -57,23 +57,55 @@ public class Tarea {
     private String estado; // lo dejamos como TEXT, si querés luego lo pasamos a enum
 
     // getters/setters
-    public Long getIdTarea() { return idTarea; }
+    public Long getIdTarea() {
+        return idTarea;
+    }
 
-    public Integer getNumeroTarea() { return numeroTarea; }
-    public void setNumeroTarea(Integer numeroTarea) { this.numeroTarea = numeroTarea; }
+    public Integer getNumeroTarea() {
+        return numeroTarea;
+    }
 
-    public TipoTarea getTipoTarea() { return tipoTarea; }
-    public void setTipoTarea(TipoTarea tipoTarea) { this.tipoTarea = tipoTarea; }
+    public void setNumeroTarea(Integer numeroTarea) {
+        this.numeroTarea = numeroTarea;
+    }
 
-    public Operario getOperario() { return operario; }
-    public void setOperario(Operario operario) { this.operario = operario; }
+    public TipoTarea getTipoTarea() {
+        return tipoTarea;
+    }
 
-    public LocalDate getFecha() { return fecha; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+    public void setTipoTarea(TipoTarea tipoTarea) {
+        this.tipoTarea = tipoTarea;
+    }
 
-    public LocalTime getHora() { return hora; }
-    public void setHora(LocalTime hora) { this.hora = hora; }
+    public Operario getOperario() {
+        return operario;
+    }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public void setOperario(Operario operario) {
+        this.operario = operario;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
+    }
+
+    public LocalTime getHora() {
+        return hora;
+    }
+
+    public void setHora(LocalTime hora) {
+        this.hora = hora;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 }

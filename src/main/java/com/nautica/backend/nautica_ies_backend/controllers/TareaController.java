@@ -36,8 +36,7 @@ public class TareaController {
     public ResponseEntity<Page<Tarea>> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "idTarea,asc") String sort
-    ) {
+            @RequestParam(defaultValue = "idTarea,asc") String sort) {
         String[] s = sort.split(",");
         Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(dir, s[0]);
@@ -63,8 +62,8 @@ public class TareaController {
     public ResponseEntity<Tarea> crear(@RequestBody @Valid Tarea tarea, UriComponentsBuilder uriBuilder) {
         Tarea creada = service.crear(tarea);
         var location = uriBuilder.path("/api/tareas/{id}")
-                                 .buildAndExpand(creada.getIdTarea())
-                                 .toUri();
+                .buildAndExpand(creada.getIdTarea())
+                .toUri();
         return ResponseEntity.created(location).body(creada);
     }
 

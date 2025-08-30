@@ -13,18 +13,18 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
 
   // Overlap por embarcación (misma fecha, franja que se pisa)
   @Query("""
-    select (count(t) > 0)
-    from Turno t
-    where t.fecha = :fecha
-      and t.embarcacion.idEmbarcacion = :idEmbarcacion
-      and (t.horaInicio < :horaFin and t.horaFin > :horaInicio)
-      and (:idTurnoExcluido is null or t.id <> :idTurnoExcluido)
-  """)
+        select (count(t) > 0)
+        from Turno t
+        where t.fecha = :fecha
+          and t.embarcacion.idEmbarcacion = :idEmbarcacion
+          and (t.horaInicio < :horaFin and t.horaFin > :horaInicio)
+          and (:idTurnoExcluido is null or t.id <> :idTurnoExcluido)
+      """)
   boolean existsOverlap(LocalDate fecha,
-                        LocalTime horaInicio,
-                        LocalTime horaFin,
-                        Long idEmbarcacion,
-                        Long idTurnoExcluido);
+      LocalTime horaInicio,
+      LocalTime horaFin,
+      Long idEmbarcacion,
+      Long idTurnoExcluido);
 
   // Cliente y Operario heredan id como idUsuario
   List<Turno> findByCliente_IdUsuarioOrderByFechaDescHoraInicioDesc(Long idCliente);

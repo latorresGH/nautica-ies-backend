@@ -31,8 +31,7 @@ public class EmbarcacionController {
     public ResponseEntity<Page<Embarcacion>> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "idEmbarcacion,asc") String sort
-    ) {
+            @RequestParam(defaultValue = "idEmbarcacion,asc") String sort) {
         String[] s = sort.split(",");
         Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(dir, s[0]);
@@ -75,22 +74,23 @@ public class EmbarcacionController {
 
     // --------- Asignaciones N:M (SIN DTOs) ---------
 
-    // Listar relaciones usuario-embarcación (devuelve UsuarioEmbarcacion directamente)
+    // Listar relaciones usuario-embarcación (devuelve UsuarioEmbarcacion
+    // directamente)
     @GetMapping("/{id}/usuarios")
     public ResponseEntity<List<UsuarioEmbarcacion>> usuarios(@PathVariable Long id) {
         return ResponseEntity.ok(service.listarUsuarios(id));
     }
 
     // Asignar usuario a embarcación usando query params
-    // Ejemplo: POST /api/embarcaciones/10/usuarios?usuarioId=5&rol=PROPIETARIO&desde=2025-08-28
+    // Ejemplo: POST
+    // /api/embarcaciones/10/usuarios?usuarioId=5&rol=PROPIETARIO&desde=2025-08-28
     @PostMapping("/{id}/usuarios")
     public ResponseEntity<Void> asignarUsuario(
             @PathVariable Long id,
             @RequestParam Long usuarioId,
             @RequestParam RolEnEmbarcacion rol,
             @RequestParam(required = false) LocalDate desde,
-            @RequestParam(required = false) LocalDate hasta
-    ) {
+            @RequestParam(required = false) LocalDate hasta) {
         service.asignarUsuario(id, usuarioId, rol, desde, hasta);
         return ResponseEntity.noContent().build();
     }

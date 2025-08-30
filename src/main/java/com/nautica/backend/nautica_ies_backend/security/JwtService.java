@@ -23,8 +23,7 @@ public class JwtService {
     public JwtService(
             @Value("${jwt.secret}") String base64Secret,
             @Value("${jwt.expiration-minutes}") long accessMinutes,
-            @Value("${jwt.refresh-expiration-days}") long refreshDays
-    ) {
+            @Value("${jwt.refresh-expiration-days}") long refreshDays) {
         byte[] keyBytes = Decoders.BASE64.decode(base64Secret);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessExpirationMillis = accessMinutes * 60_000L;

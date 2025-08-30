@@ -27,11 +27,11 @@ public class OperarioController {
     public ResponseEntity<Page<Operario>> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "idUsuario,asc") String sort
-    ) {
+            @RequestParam(defaultValue = "idUsuario,asc") String sort) {
         String[] s = sort.split(",");
         Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc")
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
         Sort sortObj = Sort.by(dir, s[0]);
         return ResponseEntity.ok(service.listar(page, size, sortObj));
     }
@@ -51,18 +51,18 @@ public class OperarioController {
     // Crear
     @PostMapping
     public ResponseEntity<Operario> crear(@RequestBody @Valid Operario operario,
-                                          UriComponentsBuilder uriBuilder) {
+            UriComponentsBuilder uriBuilder) {
         Operario creado = service.crear(operario);
         var location = uriBuilder.path("/api/operarios/{id}")
-                                 .buildAndExpand(creado.getIdUsuario())
-                                 .toUri();
+                .buildAndExpand(creado.getIdUsuario())
+                .toUri();
         return ResponseEntity.created(location).body(creado); // 201 + Location
     }
 
     // Actualizar
     @PutMapping("/{id}")
     public ResponseEntity<Operario> actualizar(@PathVariable Long id,
-                                               @RequestBody @Valid Operario operario) {
+            @RequestBody @Valid Operario operario) {
         return ResponseEntity.ok(service.actualizar(id, operario));
     }
 

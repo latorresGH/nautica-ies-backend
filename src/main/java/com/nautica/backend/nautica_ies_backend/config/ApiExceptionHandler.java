@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
-  private Map<String,Object> body(HttpServletRequest req, HttpStatus status, String message) {
-    Map<String,Object> map = new LinkedHashMap<>();
+  private Map<String, Object> body(HttpServletRequest req, HttpStatus status, String message) {
+    Map<String, Object> map = new LinkedHashMap<>();
     map.put("timestamp", Instant.now().toString());
     map.put("status", status.value());
     map.put("error", status.getReasonPhrase());
@@ -30,20 +30,20 @@ public class ApiExceptionHandler {
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
-  public ResponseEntity<Map<String,Object>> handleDataIntegrity(
+  public ResponseEntity<Map<String, Object>> handleDataIntegrity(
       DataIntegrityViolationException ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(body(req, HttpStatus.CONFLICT, "Violación de integridad de datos"));
   }
 
   @ExceptionHandler({ MethodArgumentNotValidException.class, BindException.class })
-  public ResponseEntity<Map<String,Object>> handleValidation(Exception ex, HttpServletRequest req) {
+  public ResponseEntity<Map<String, Object>> handleValidation(Exception ex, HttpServletRequest req) {
     return ResponseEntity.badRequest()
         .body(body(req, HttpStatus.BAD_REQUEST, "Datos inválidos"));
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<Map<String,Object>> handleGeneric(Exception ex, HttpServletRequest req) {
+  public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(body(req, HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error inesperado"));
   }

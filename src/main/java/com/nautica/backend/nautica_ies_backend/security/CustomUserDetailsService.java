@@ -18,11 +18,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         var usuario = usuarioRepo.findByCorreo(correo)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + correo));
 
-        return User.withUsername(usuario.getCorreo())    // JWT subject será el correo
-                .password(usuario.getContrasena())       // ojo: campo contrasena (encriptada)
-                .authorities(usuario.getRol().name())    // tu enum Rol
+        return User.withUsername(usuario.getCorreo()) // JWT subject será el correo
+                .password(usuario.getContrasena()) // ojo: campo contrasena (encriptada)
+                .authorities(usuario.getRol().name()) // tu enum Rol
                 .accountLocked(false)
-                .disabled(!usuario.getActivo())          // si usás flag "activo"
+                .disabled(!usuario.getActivo()) // si usás flag "activo"
                 .build();
     }
 }

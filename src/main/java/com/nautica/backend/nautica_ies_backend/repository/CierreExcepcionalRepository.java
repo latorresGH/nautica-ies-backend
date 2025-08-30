@@ -9,5 +9,6 @@ import java.util.Optional;
 
 public interface CierreExcepcionalRepository extends JpaRepository<CierreExcepcional, Long> {
     Optional<CierreExcepcional> findByFecha(LocalDate fecha);
+
     List<CierreExcepcional> findByFechaBetween(LocalDate desde, LocalDate hasta);
 }

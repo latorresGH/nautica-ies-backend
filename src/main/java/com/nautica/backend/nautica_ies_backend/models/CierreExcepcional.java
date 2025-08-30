@@ -28,15 +28,47 @@ public class CierreExcepcional {
     private String motivo;
 
     // getters / setters
-    public Long getId() { return id; }
-    public LocalDate getFecha() { return fecha; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-    public Boolean getAbierto() { return abierto; }
-    public void setAbierto(Boolean abierto) { this.abierto = abierto; }
-    public LocalTime getHoraApertura() { return horaApertura; }
-    public void setHoraApertura(LocalTime horaApertura) { this.horaApertura = horaApertura; }
-    public LocalTime getHoraCierre() { return horaCierre; }
-    public void setHoraCierre(LocalTime horaCierre) { this.horaCierre = horaCierre; }
-    public String getMotivo() { return motivo; }
-    public void setMotivo(String motivo) { this.motivo = motivo; }
+    public Long getId() {
+        return id;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
+    }
+
+    public Boolean getAbierto() {
+        return abierto;
+    }
+
+    public void setAbierto(Boolean abierto) {
+        this.abierto = abierto;
+    }
+
+    public LocalTime getHoraApertura() {
+        return horaApertura;
+    }
+
+    public void setHoraApertura(LocalTime horaApertura) {
+        this.horaApertura = horaApertura;
+    }
+
+    public LocalTime getHoraCierre() {
+        return horaCierre;
+    }
+
+    public void setHoraCierre(LocalTime horaCierre) {
+        this.horaCierre = horaCierre;
+    }
+
+    public String getMotivo() {
+        return motivo;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
+    }
 }

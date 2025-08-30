@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "operarios")
 @PrimaryKeyJoinColumn(name = "id_operario") // PK = FK a usuarios.id_usuario
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Operario extends Usuario {
 
     @NotBlank

@@ -29,7 +29,8 @@ import jakarta.validation.Valid;
 /**
  * Controlador REST para la gestión de {@link Usuario}.
  * <p>
- * Proporciona endpoints para listar, buscar, crear, actualizar y eliminar usuarios.
+ * Proporciona endpoints para listar, buscar, crear, actualizar y eliminar
+ * usuarios.
  */
 @RestController
 @RequestMapping("/api/usuarios")
@@ -60,8 +61,7 @@ public class UsuarioController {
     public ResponseEntity<Page<Usuario>> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "idUsuario,asc") String sort
-    ) {
+            @RequestParam(defaultValue = "idUsuario,asc") String sort) {
         String[] s = sort.split(",");
         Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(dir, s[0]);
@@ -95,32 +95,33 @@ public class UsuarioController {
     /**
      * Crea un nuevo usuario.
      *
-     * @param usuario     Datos del usuario a crear (validados).
-     * @param uriBuilder  Constructor para la cabecera Location.
+     * @param usuario    Datos del usuario a crear (validados).
+     * @param uriBuilder Constructor para la cabecera Location.
      * @return Usuario creado con status 201 y cabecera Location.
      */
-@PostMapping
+    @PostMapping
     public ResponseEntity<Usuario> crear(@RequestBody @Valid UsuarioCreateRequest req,
-                                         UriComponentsBuilder uriBuilder) {
+            UriComponentsBuilder uriBuilder) {
         // 1) Elegir subclase concreta según el rol
         Usuario u = switch (req.rol()) {
-            case "admin"    -> { 
+            case "admin" -> {
                 // Si tenés clase Administrador, usala aquí:
                 // var a = new Administrador();
                 // yield a;
-                // Si NO tenés Administrador concreto, podés decidir crear Operario o Cliente por ahora:
+                // Si NO tenés Administrador concreto, podés decidir crear Operario o Cliente
+                // por ahora:
                 throw new IllegalArgumentException("Rol 'admin' requiere entidad concreta (Administrador).");
             }
             case "operario" -> new Operario();
             case "cliente" -> {
-            var c = new Cliente();
-            // ⚠️ CAMPOS OBLIGATORIOS DE CLIENTE
-            c.setNumCliente(req.numCliente());            // <-- AHÍ VA
-            c.setFechaAlta(java.time.LocalDate.now()); 
-            c.setEstadoCliente(EstadoCliente.activo);     // default sugerido
-            c.setTipoCliente(TipoCliente.cliente);
-            yield c;
-        }
+                var c = new Cliente();
+                // ⚠️ CAMPOS OBLIGATORIOS DE CLIENTE
+                c.setNumCliente(req.numCliente()); // <-- AHÍ VA
+                c.setFechaAlta(java.time.LocalDate.now());
+                c.setEstadoCliente(EstadoCliente.activo); // default sugerido
+                c.setTipoCliente(TipoCliente.cliente);
+                yield c;
+            }
 
             default -> throw new IllegalArgumentException("Rol inválido: " + req.rol());
         };

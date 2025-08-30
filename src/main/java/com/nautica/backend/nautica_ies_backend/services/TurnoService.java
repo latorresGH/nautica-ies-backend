@@ -25,7 +25,7 @@ public class TurnoService {
   public Turno crear(Turno turno) {
     validarHoras(turno.getHoraInicio(), turno.getHoraFin());
     verificarSolapamiento(null, turno.getFecha(), turno.getHoraInicio(), turno.getHoraFin(),
-                          turno.getEmbarcacion().getIdEmbarcacion());
+        turno.getEmbarcacion().getIdEmbarcacion());
     return turnoRepo.save(turno);
   }
 
@@ -50,7 +50,7 @@ public class TurnoService {
 
     validarHoras(nuevo.getHoraInicio(), nuevo.getHoraFin());
     verificarSolapamiento(id, nuevo.getFecha(), nuevo.getHoraInicio(), nuevo.getHoraFin(),
-                          nuevo.getEmbarcacion().getIdEmbarcacion());
+        nuevo.getEmbarcacion().getIdEmbarcacion());
 
     existente.setFecha(nuevo.getFecha());
     existente.setHoraInicio(nuevo.getHoraInicio());
@@ -64,20 +64,23 @@ public class TurnoService {
 
   @Transactional
   public void eliminar(Long id) {
-    if (!turnoRepo.existsById(id)) throw new EntityNotFoundException("Turno no encontrado");
+    if (!turnoRepo.existsById(id))
+      throw new EntityNotFoundException("Turno no encontrado");
     turnoRepo.deleteById(id);
   }
 
   private void validarHoras(LocalTime inicio, LocalTime fin) {
-    if (!fin.isAfter(inicio)) throw new IllegalArgumentException("hora_fin debe ser posterior a hora_inicio");
+    if (!fin.isAfter(inicio))
+      throw new IllegalArgumentException("hora_fin debe ser posterior a hora_inicio");
   }
 
   private void verificarSolapamiento(Long idTurnoExcluido,
-                                     LocalDate fecha,
-                                     LocalTime inicio,
-                                     LocalTime fin,
-                                     Long idEmbarcacion) {
+      LocalDate fecha,
+      LocalTime inicio,
+      LocalTime fin,
+      Long idEmbarcacion) {
     boolean overlap = turnoRepo.existsOverlap(fecha, inicio, fin, idEmbarcacion, idTurnoExcluido);
-    if (overlap) throw new IllegalStateException("Ya existe un turno superpuesto para esa embarcación");
+    if (overlap)
+      throw new IllegalStateException("Ya existe un turno superpuesto para esa embarcación");
   }
 }

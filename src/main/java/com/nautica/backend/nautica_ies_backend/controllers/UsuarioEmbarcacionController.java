@@ -29,8 +29,7 @@ public class UsuarioEmbarcacionController {
     public ResponseEntity<Page<UsuarioEmbarcacion>> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "id,asc") String sort
-    ) {
+            @RequestParam(defaultValue = "id,asc") String sort) {
         String[] s = sort.split(",");
         Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(dir, s[0]);
@@ -56,7 +55,8 @@ public class UsuarioEmbarcacionController {
     }
 
     // Crear (sin DTOs): recibe todo por query params
-    // Ej: POST /api/usuario-embarcaciones?usuarioId=5&embarcacionId=10&rol=PROPIETARIO&desde=2025-08-28
+    // Ej: POST
+    // /api/usuario-embarcaciones?usuarioId=5&embarcacionId=10&rol=PROPIETARIO&desde=2025-08-28
     @PostMapping
     public ResponseEntity<UsuarioEmbarcacion> crear(
             @RequestParam Long usuarioId,
@@ -64,12 +64,11 @@ public class UsuarioEmbarcacionController {
             @RequestParam RolEnEmbarcacion rol,
             @RequestParam(required = false) LocalDate desde,
             @RequestParam(required = false) LocalDate hasta,
-            UriComponentsBuilder uriBuilder
-    ) {
+            UriComponentsBuilder uriBuilder) {
         UsuarioEmbarcacion creado = service.crear(usuarioId, embarcacionId, rol, desde, hasta);
         var location = uriBuilder.path("/api/usuario-embarcaciones/{id}")
-                                 .buildAndExpand(creado.getId())
-                                 .toUri();
+                .buildAndExpand(creado.getId())
+                .toUri();
         return ResponseEntity.created(location).body(creado); // 201 + Location
     }
 
@@ -80,8 +79,7 @@ public class UsuarioEmbarcacionController {
             @PathVariable Long id,
             @RequestParam(required = false) RolEnEmbarcacion rol,
             @RequestParam(required = false) LocalDate desde,
-            @RequestParam(required = false) LocalDate hasta
-    ) {
+            @RequestParam(required = false) LocalDate hasta) {
         return ResponseEntity.ok(service.actualizar(id, rol, desde, hasta));
     }
 

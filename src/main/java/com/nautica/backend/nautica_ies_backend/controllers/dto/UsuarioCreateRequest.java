@@ -6,16 +6,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 
 public record UsuarioCreateRequest(
-    @NotBlank String nombre,
-    @NotBlank String apellido,
-    @Email @NotBlank String correo,
-    @NotBlank String contrasena,
-    @NotBlank String dni,
-    @JsonProperty("num_cliente") Integer numCliente,  // <-- viene como num_cliente en JSON
-    String telefono,
-    String direccion,
-    String localidad,
-    String provincia,
-    @NotBlank String rol,   // ej: "admin" | "operario" | "cliente"
-    @NotNull Boolean activo
-) {}
+        @NotBlank String nombre,
+        @NotBlank String apellido,
+        @Email @NotBlank String correo,
+        @NotBlank String contrasena,
+        @NotBlank String dni,
+        @JsonProperty("num_cliente") Integer numCliente, // <-- viene como num_cliente en JSON
+        String telefono,
+        String direccion,
+        String localidad,
+        String provincia,
+        @NotBlank String rol, // ej: "admin" | "operario" | "cliente"
+        @NotNull Boolean activo) {
+}

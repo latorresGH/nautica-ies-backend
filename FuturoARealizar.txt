@@ -1,0 +1,127 @@
+dale, checklist para mañana 👇
+
+# Prioridades
+
+1. **Seguridad (URLs libres vs protegidas por JWT)**
+
+* En `SecurityConfig`:
+
+  * `permitAll()` para:
+
+    * `POST /api/auth/login`
+    * (si lo tenés) `POST /api/auth/refresh`
+    * opcional: `/actuator/health`, `/swagger-ui/**`, `/v3/api-docs/**`
+  * `authenticated()` para todo lo demás: `anyRequest().authenticated()`
+  * Registrar `JwtAuthenticationFilter` antes de `UsernamePasswordAuthenticationFilter`
+  * Configurar CORS si vas a pegarle desde el front.
+
+2. **Roles y autorización**
+
+* Mapear reglas por rol (cuando agregues Admin real):
+
+  * `hasRole("admin")` para `POST/PUT/DELETE /api/usuarios/**`
+  * `hasAnyRole("admin","operario")` para listados/consultas internas
+  * `hasAnyRole("admin","operario","cliente")` para endpoints “self” si correspondiera
+* Asegurar que `RolUsuario` ↔ claims del JWT coincidan (prefijo `ROLE_` si usás `hasRole`).
+
+3. **Entidad Administrador**
+
+* Crear `Administrador extends Usuario` (JOINED como el resto).
+* Decidir campos propios (legajo/área/lo que necesites).
+* Actualizar `UsuarioController#crear` para instanciar `Administrador` cuando `rol="admin"`.
+* Ajustar reglas de seguridad para admin.
+
+4. **Validaciones y consistencia**
+
+* `UsuarioCreateRequest`:
+
+  * Mantener `numCliente` **obligatorio** cuando `rol="cliente"`.
+  * Setear por defecto en el controlador de cliente:
+
+    * `estadoCliente = ACTIVO`
+    * `tipoCliente = cliente`
+* Confirmar que `Usuario.activo` es `BOOLEAN` (ya ok) y que el repo/queries **no** intentan leerlo como `byte`.
+* Repass de enums (`EstadoCliente`, `TipoCliente`, `RolUsuario`) en DB como `VARCHAR` (EnumType.STRING) y datos en mayúsculas si querés uniformidad.
+
+5. **Errores y mensajes**
+
+* En `ApiExceptionHandler`, separar:
+
+  * `DataIntegrityViolationException` → 409 con mensaje de campo duplicado.
+  * `MethodArgumentNotValidException` → 400 con errores de validación.
+  * `ResourceNotFoundException` → 404.
+  * `AccessDeniedException`/`AuthenticationException` → 403/401.
+
+6. **Migraciones DB**
+
+* Agregar/ajustar migraciones (Flyway/Liquibase) para:
+
+  * `clientes.estado_cliente NOT NULL`
+  * `clientes.tipo_cliente NOT NULL`
+  * índices únicos (`usuarios.correo`, `usuarios.dni`, `clientes.num_cliente`)
+
+---
+
+# Tests que te conviene escribir
+
+**Unit tests (JUnit + Mockito)**
+
+* `UsuarioService`:
+
+  * `crear()` encripta contraseña y guarda.
+  * Rechaza duplicados (simular `DataIntegrityViolationException`).
+  * `actualizar()` no pisa contraseña si viene null/vacía.
+  * `buscarPorCorreo()` cuando existe / cuando no.
+
+**Web layer (MockMvc)**
+
+* `POST /api/auth/login`:
+
+  * 200 con credenciales válidas.
+  * 401 inválidas.
+* `POST /api/usuarios`:
+
+  * 201 cliente válido con `numCliente`.
+  * 400 sin `numCliente` cuando rol=cliente.
+  * 409 duplicados `dni/correo/numCliente`.
+  * 401/403 sin token / sin rol.
+
+**Integración (Testcontainers + PostgreSQL)**
+
+* Crear usuario cliente → persiste en `usuarios` y `clientes` (campos por defecto ok).
+* Login + usar token para crear usuario (flujo completo).
+* Búsqueda por correo trae correctamente JOIN de subclases.
+
+---
+
+# Endpoints actuales (confirmados por tu código)
+
+**Auth**
+
+* `POST /api/auth/login` – devuelve JWT (accessToken y posiblemente refreshToken).
+
+**Usuarios**
+
+* `GET /api/usuarios` – listado paginado
+  Parámetros: `page`, `size`, `sort` (ej: `apellido,asc`)
+* `GET /api/usuarios/{id}` – obtener por id
+* `GET /api/usuarios/by-correo?correo=...` – obtener por correo
+* `POST /api/usuarios` – crear usuario
+
+  * Campos comunes (`nombre`, `apellido`, `correo`, `contrasena`, `dni`, `telefono`, `direccion`, `localidad`, `provincia`, `rol`, `activo`)
+  * Si `rol="cliente"`: **requiere** `numCliente` y setea por defecto `estadoCliente=ACTIVO`, `tipoCliente=cliente`, `fechaAlta=now()`
+* `PUT /api/usuarios/{id}` – actualizar
+* `DELETE /api/usuarios/{id}` – eliminar
+
+> *Nota:* Vi consultas a `embarcaciones` en logs, pero no tenemos controlador expuesto aquí; lo dejaría fuera hasta que lo confirmes.
+
+---
+
+# Sugerencias rápidas (quality-of-life)
+
+* Documentar con OpenAPI/Swagger (springdoc) y dejar `/swagger-ui/**` público.
+* Añadir `@JsonProperty(access = WRITE_ONLY)` a `contrasena` (ya lo tenés en `Usuario`).
+* Devolver DTOs al crear/listar (no la entidad completa) para no exponer campos sensibles ni relaciones perezosas.
+* Añadir `@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})` (ya está en `Usuario`).
+
+Si querés, mañana te paso un `SecurityConfig` base con `permitAll`/`authenticated`, y ejemplos de tests con MockMvc y Testcontainers listos para pegar. 😴🛌

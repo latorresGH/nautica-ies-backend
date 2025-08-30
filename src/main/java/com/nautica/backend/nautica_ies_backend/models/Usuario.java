@@ -26,7 +26,7 @@ import jakarta.validation.constraints.NotBlank;
  * 
  * Contiene informacion personal, de contacto, de autenticacion y de rol.
  */
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Entity
 @Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -304,6 +304,7 @@ public abstract class Usuario {
 
     /**
      * Obtiene la lista de embarcaciones asociadas al usuario.
+     * 
      * @return Lista de embarcaciones.
      * 
      */
@@ -313,6 +314,7 @@ public abstract class Usuario {
 
     /**
      * Establece la lista de embarcaciones asociadas al usuario.
+     * 
      * @param embarcaciones
      */
     public void setEmbarcaciones(java.util.List<UsuarioEmbarcacion> embarcaciones) {

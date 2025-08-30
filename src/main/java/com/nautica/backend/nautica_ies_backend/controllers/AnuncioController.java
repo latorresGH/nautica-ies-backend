@@ -33,8 +33,7 @@ public class AnuncioController {
     public ResponseEntity<Page<Anuncio>> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "idAnuncio,asc") String sort
-    ) {
+            @RequestParam(defaultValue = "idAnuncio,asc") String sort) {
         String[] s = sort.split(",");
         Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         return ResponseEntity.ok(service.listar(page, size, Sort.by(dir, s[0])));
