@@ -15,7 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nautica.backend.nautica_ies_backend.controllers.dto.UsuarioCreateRequest;
+import com.nautica.backend.nautica_ies_backend.models.Cliente;
+import com.nautica.backend.nautica_ies_backend.models.Operario;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
+import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
+import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
 
 import jakarta.validation.Valid;
@@ -93,11 +99,54 @@ public class UsuarioController {
      * @param uriBuilder  Constructor para la cabecera Location.
      * @return Usuario creado con status 201 y cabecera Location.
      */
-    @PostMapping
-    public ResponseEntity<Usuario> crear(@RequestBody @Valid Usuario usuario, UriComponentsBuilder uriBuilder) {
-        Usuario creado = service.crear(usuario);
-        var location = uriBuilder.path("/api/usuarios/{id}").buildAndExpand(creado.getIdUsuario()).toUri();
-        return ResponseEntity.created(location).body(creado); // 201 + Location header
+@PostMapping
+    public ResponseEntity<Usuario> crear(@RequestBody @Valid UsuarioCreateRequest req,
+                                         UriComponentsBuilder uriBuilder) {
+        // 1) Elegir subclase concreta según el rol
+        Usuario u = switch (req.rol()) {
+            case "admin"    -> { 
+                // Si tenés clase Administrador, usala aquí:
+                // var a = new Administrador();
+                // yield a;
+                // Si NO tenés Administrador concreto, podés decidir crear Operario o Cliente por ahora:
+                throw new IllegalArgumentException("Rol 'admin' requiere entidad concreta (Administrador).");
+            }
+            case "operario" -> new Operario();
+            case "cliente" -> {
+            var c = new Cliente();
+            // ⚠️ CAMPOS OBLIGATORIOS DE CLIENTE
+            c.setNumCliente(req.numCliente());            // <-- AHÍ VA
+            c.setFechaAlta(java.time.LocalDate.now()); 
+            c.setEstadoCliente(EstadoCliente.activo);     // default sugerido
+            c.setTipoCliente(TipoCliente.cliente);
+            yield c;
+        }
+
+            default -> throw new IllegalArgumentException("Rol inválido: " + req.rol());
+        };
+
+        // 2) Mapear campos comunes
+        u.setNombre(req.nombre());
+        u.setApellido(req.apellido());
+        u.setCorreo(req.correo());
+        u.setContrasena(req.contrasena()); // el service encripta
+        u.setDni(req.dni());
+        u.setTelefono(req.telefono());
+        u.setDireccion(req.direccion());
+        u.setLocalidad(req.localidad());
+        u.setProvincia(req.provincia());
+        u.setActivo(req.activo());
+
+        // 3) Setear el enum (en minúscula, como tu enum)
+        u.setRol(RolUsuario.valueOf(req.rol())); // enum en minúsculas: admin/operario/cliente
+
+        // 4) Guardar
+        Usuario creado = service.crear(u);
+
+        var location = uriBuilder.path("/api/usuarios/{id}")
+                .buildAndExpand(creado.getIdUsuario())
+                .toUri();
+        return ResponseEntity.created(location).body(creado);
     }
 
     /**

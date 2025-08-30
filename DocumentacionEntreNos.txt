@@ -168,3 +168,63 @@ public ResponseEntity<Void> eliminar(@PathVariable Long id) {
 ---
 
 
+9 Proteger endpoints
+
+En tus controladores existentes:
+
+// ejemplo
+@GetMapping("/api/embarcaciones")
+@PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+public List<Embarcacion> listar() { ... }
+
+
+O simplemente exigir autenticación y validar el rol con hasAuthority(...).
+
+10) Pruebas rápidas (Thunder Client / cURL)
+
+Login
+
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user@correo.com",
+  "password": "tuPassword"
+}
+
+
+Respuesta:
+
+{
+  "accessToken": "<jwt>",
+  "refreshToken": "<jwt>",
+  "tokenType": "Bearer"
+}
+
+
+Usar el access token
+
+GET http://localhost:8080/api/embarcaciones
+Authorization: Bearer <accessToken>
+
+
+Refrescar
+
+POST http://localhost:8080/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "<jwt_refresh>"
+}
+
+Tips y gotchas
+
+Password hashing: asegurate de guardar contraseñas con BCryptPasswordEncoder. Si ya tenés usuarios con texto plano, migrá (o resigná durante login si controlás el flujo).
+
+Propiedades sensibles: mové spring.datasource.password y jwt.secret a variables de entorno en producción.
+
+Roles/Authorities: si tu enum es Rol {ADMIN, USER}, podés mapear directamente .authorities(rol.name()). Si usás roles(...), Spring antepone ROLE_.
+
+Filtros reactivos: ya desactivaste WebFlux; perfecto para servlet stack.
+
+Dispatcher types: tu spring.security.filter.dispatcher-types=request está OK; podés omitirlo si no lo necesitás.

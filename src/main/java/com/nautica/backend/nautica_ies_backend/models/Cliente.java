@@ -3,6 +3,7 @@ package com.nautica.backend.nautica_ies_backend.models;
 import java.time.LocalDate;
 
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,12 +26,13 @@ public class Cliente extends Usuario {
     @Column(name = "num_cliente", unique = true, nullable = false)
     private Integer numCliente;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_cliente", nullable = false)
-    private String estadoCliente;
+    private EstadoCliente estadoCliente;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_cliente", nullable = false, length = 20)
-    private TipoCliente tipoCliente;
+    private TipoCliente tipoCliente = TipoCliente.cliente;
 
     @Column(name = "fecha_alta")
     private LocalDate fechaAlta = LocalDate.now();
@@ -52,11 +54,11 @@ public class Cliente extends Usuario {
         this.numCliente = numCliente;
     }
 
-    public String getEstadoCliente() {
+    public EstadoCliente getEstadoCliente() {
         return estadoCliente;
     }
 
-    public void setEstadoCliente(String estadoCliente) {
+    public void setEstadoCliente(EstadoCliente estadoCliente) {
         this.estadoCliente = estadoCliente;
     }
 
