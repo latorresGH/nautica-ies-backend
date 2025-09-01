@@ -59,6 +59,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Permití /api/auth/** sin filtrar (lo maneja Security)
         String path = request.getServletPath();
-        return path.startsWith("/api/auth/");
+        return path.startsWith("/api/"); //<--- poner /api/auth/ o rutas que no querramos que se puedan acceder sin token
     }
 }

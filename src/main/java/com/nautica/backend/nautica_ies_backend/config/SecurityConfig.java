@@ -29,6 +29,24 @@ public class SecurityConfig {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
+    // @Bean
+    // public SecurityFilterChain securityFilterChain(HttpSecurity http) throws
+    // Exception {
+    // http
+    // .csrf(csrf -> csrf.disable())
+    // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+    // .sessionManagement(sm ->
+    // sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    // .authorizeHttpRequests(auth -> auth
+    // .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    // .requestMatchers("/api/auth/**").permitAll()
+    // .anyRequest().authenticated())
+    // // SIN .authenticationProvider(...)
+    // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+    // return http.build();
+    // }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -36,10 +54,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated())
-                // SIN .authenticationProvider(...)
+                        .anyRequest().permitAll() // <--- todo libre
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
