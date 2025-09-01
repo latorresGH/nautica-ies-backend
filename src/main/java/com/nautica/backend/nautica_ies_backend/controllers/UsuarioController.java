@@ -18,9 +18,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.UsuarioCreateRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
+import com.nautica.backend.nautica_ies_backend.models.Administrador;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
+import com.nautica.backend.nautica_ies_backend.models.enums.TipoAdministrador;
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
 
@@ -105,14 +107,28 @@ public class UsuarioController {
         // 1) Elegir subclase concreta según el rol
         Usuario u = switch (req.rol()) {
             case "admin" -> {
-                // Si tenés clase Administrador, usala aquí:
-                // var a = new Administrador();
-                // yield a;
-                // Si NO tenés Administrador concreto, podés decidir crear Operario o Cliente
-                // por ahora:
-                throw new IllegalArgumentException("Rol 'admin' requiere entidad concreta (Administrador).");
+                var a = new Administrador();
+                // Validaciones específicas de admin
+                if (req.codigoAdmin() == null || req.codigoAdmin().isBlank()) {
+                    throw new IllegalArgumentException("codigo_admin es obligatorio cuando rol=admin");
+                }
+                a.setCodigoAdmin(req.codigoAdmin());
+                a.setTipoAdmin(parseTipoAdministrador(req.tipoAdmin())); // convierte "gerente" -> GERENTE
+                a.setFechaAlta(java.time.LocalDate.now());
+                yield a;
             }
-            case "operario" -> new Operario();
+            case "operario" -> {
+                var o = new Operario();
+                if (req.legajo() == null || req.legajo().isBlank()) {
+                    throw new IllegalArgumentException("legajo es obligatorio cuando rol=operario");
+                }
+                if (req.puesto() == null || req.puesto().isBlank()) {
+                    throw new IllegalArgumentException("puesto es obligatorio cuando rol=operario");
+                }
+                o.setLegajo(req.legajo());
+                o.setPuesto(req.puesto());
+                yield o;
+            }
             case "cliente" -> {
                 var c = new Cliente();
                 // ⚠️ CAMPOS OBLIGATORIOS DE CLIENTE
@@ -136,7 +152,7 @@ public class UsuarioController {
         u.setDireccion(req.direccion());
         u.setLocalidad(req.localidad());
         u.setProvincia(req.provincia());
-        u.setActivo(req.activo());
+        u.setActivo(req.activo() == null ? Boolean.TRUE : req.activo());
 
         // 3) Setear el enum (en minúscula, como tu enum)
         u.setRol(RolUsuario.valueOf(req.rol())); // enum en minúsculas: admin/operario/cliente
@@ -148,6 +164,13 @@ public class UsuarioController {
                 .buildAndExpand(creado.getIdUsuario())
                 .toUri();
         return ResponseEntity.created(location).body(creado);
+    }
+
+    private TipoAdministrador parseTipoAdministrador(String raw) {
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("tipo_admin es obligatorio cuando rol=admin");
+        }
+        return TipoAdministrador.valueOf(raw.trim()); // "gerente" -> GERENTE
     }
 
     /**

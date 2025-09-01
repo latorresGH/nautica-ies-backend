@@ -17,5 +17,13 @@ public record UsuarioCreateRequest(
         String localidad,
         String provincia,
         @NotBlank String rol, // ej: "admin" | "operario" | "cliente"
-        @NotNull Boolean activo) {
+        @NotNull Boolean activo,
+        @JsonProperty("codigo_admin") String codigoAdmin,
+        @JsonProperty("tipo_admin") String tipoAdmin, // "gerente" | "jefe" | "admin_usuarios"
+        String legajo,
+        String puesto
+){
+        public UsuarioCreateRequest {
+                if (activo == null) activo = Boolean.TRUE; // default
+    }
 }

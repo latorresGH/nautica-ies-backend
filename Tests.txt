@@ -1,0 +1,61 @@
+------------------------------------------------------------------ADMINISTRADORES----------------------------------------------------------------------------------------
+
+POST http://localhost:8080/api/usuarios
+GET  http://localhost:8080/api/administradores
+{
+  "nombre": "Franco",
+  "apellido": "Bruschini",
+  "correo": "frabega@nautica.com",
+  "contrasena": "fran123",
+  "dni": "10000000",
+  "telefono": "210342516",
+  "direccion": "Muelle 1",
+  "localidad": "Rosario",
+  "provincia": "Santa Fe",
+  "rol": "admin",              
+  "activo": true,
+  "codigoAdmin": "ADM-002",
+  "tipoAdmin": "gerente"
+}
+
+
+--------------------------------------------------------------------CLIENTES----------------------------------------------------------------------------------------
+
+
+GET http://localhost:8080/api/clientes <-- funciona pero devuelve bidreccion y repite contenido
+POST http://localhost:8080/api/usuarios
+{
+  "nombre": "Laureano",
+  "apellido": "Torres",
+  "correo": "lauretrrs@hotmail.com",
+  "contrasena": "lauri2001",
+  "dni": "43714447",
+  "num_cliente": 20003,
+  "telefono": "3425017854",
+  "direccion": "Calle 123",
+  "localidad": "Recreo",
+  "provincia": "Santa fe",
+  "rol": "cliente",
+  "activo": true
+}
+
+------------------------------------------------------------------OPERARIOS----------------------------------------------------------------------------------------
+
+GET http://localhost:8080/api/operarios
+POST http://localhost:8080/api/usuarios
+
+{
+  "nombre": "Lautaro",
+  "apellido": "Pérez",
+  "correo": "lauta@nautica.com",
+  "contrasena": "op123456",
+  "dni": "34567890",
+  "telefono": "3415000000",
+  "direccion": "Galpón 2",
+  "localidad": "Rosario",
+  "provincia": "Santa Fe",
+  "rol":"operario",
+  "activo": true,
+  "legajo": "OP-1002",
+  "puesto": "operario"
+}
