@@ -1,1 +1,2 @@
-Corregir 'correo' <- insertar lowerCase.
+    @GetMapping("/me") <--- acomodar api en un futuro para cerrarla y que no se acceda facilmente
+    LO MISMO PARA EL SECURITY CONFIGG QUE ESTA EN PERMITALL()

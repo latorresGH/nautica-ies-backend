@@ -63,6 +63,14 @@ public class AuthController {
     //     return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
     // }
 
+
+
+    /**
+     * ACTUALIZAR FUNCION EN UN FUTURO, AHORA ESTA PUESTA PARA QUE LA PUEDA LEER CUALQUIER SERVIDOR SIN PERMISOS
+     * @param authHeader
+     * @param correoFallback
+     * @return
+     */
     @GetMapping("/me")
 public UserSummary me(
         @RequestHeader(value = "Authorization", required = false) String authHeader,
