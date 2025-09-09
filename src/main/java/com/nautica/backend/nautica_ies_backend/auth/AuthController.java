@@ -15,8 +15,8 @@ public class AuthController {
     private final JwtService jwtService;
 
     public AuthController(AuthenticationManager authManager,
-            UserDetailsService uds,
-            JwtService jwtService) {
+                          UserDetailsService uds,
+                          JwtService jwtService) {
         this.authManager = authManager;
         this.userDetailsService = uds;
         this.jwtService = jwtService;
@@ -24,12 +24,16 @@ public class AuthController {
 
     @PostMapping("/login")
     public JwtResponse login(@RequestBody LoginRequest request) {
-        var authToken = new UsernamePasswordAuthenticationToken(request.username(), request.password());
+        var authToken = new UsernamePasswordAuthenticationToken(
+                request.correo(),
+                request.contrasena()
+        );
         authManager.authenticate(authToken); // lanza excepción si falla
 
-        var user = userDetailsService.loadUserByUsername(request.username());
+        var user = userDetailsService.loadUserByUsername(request.correo());
         var access = jwtService.generateAccessToken(user, java.util.Map.of(
-                "rol", user.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER")));
+                "rol", user.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER")
+        ));
         var refresh = jwtService.generateRefreshToken(user);
         return new JwtResponse(access, refresh);
     }
@@ -39,7 +43,6 @@ public class AuthController {
         var username = jwtService.extractUsername(request.refreshToken());
         var user = userDetailsService.loadUserByUsername(username);
 
-        // validá refresh al menos con expiración/subject
         if (!jwtService.isTokenValid(request.refreshToken(), user)) {
             throw new BadCredentialsException("Refresh token inválido");
         }
