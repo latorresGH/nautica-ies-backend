@@ -55,11 +55,43 @@ public class AuthController {
         return new JwtResponse(access, request.refreshToken());
     }
 
+    // @GetMapping("/me")
+    // public UserSummary me(org.springframework.security.core.Authentication auth) {
+    //     // auth.getName() = "username" del token → en tu caso, el correo
+    //     var correo = auth.getName();
+    //     var u = usuarioService.buscarPorCorreo(correo);
+    //     return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
+    // }
+
     @GetMapping("/me")
-    public UserSummary me(org.springframework.security.core.Authentication auth) {
-        // auth.getName() = "username" del token → en tu caso, el correo
-        var correo = auth.getName();
-        var u = usuarioService.buscarPorCorreo(correo);
-        return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
+public UserSummary me(
+        @RequestHeader(value = "Authorization", required = false) String authHeader,
+        @RequestParam(value = "correo", required = false) String correoFallback
+) {
+    String correo = null;
+
+    // 1) Si viene Authorization: Bearer <token>, lo usamos
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        String token = authHeader.substring(7);
+        String username = jwtService.extractUsername(token);
+        var user = userDetailsService.loadUserByUsername(username);
+        if (!jwtService.isTokenValid(token, user)) {
+            throw new BadCredentialsException("Token inválido");
+        }
+        correo = username; // en tu app, el username es el correo
     }
+
+    // 2) Fallback DEV: si no hay token, permite ?correo=...
+    if (correo == null && correoFallback != null && !correoFallback.isBlank()) {
+        correo = correoFallback;
+    }
+
+    if (correo == null) {
+        // Importante: 401 en vez de 500
+        throw new BadCredentialsException("No autenticado");
+    }
+
+    var u = usuarioService.buscarPorCorreo(correo);
+    return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
+}
 }
