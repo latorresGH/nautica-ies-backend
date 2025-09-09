@@ -2,6 +2,8 @@ package com.nautica.backend.nautica_ies_backend.auth;
 
 import com.nautica.backend.nautica_ies_backend.auth.dto.*;
 import com.nautica.backend.nautica_ies_backend.security.JwtService;
+import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
+
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +15,16 @@ public class AuthController {
     private final AuthenticationManager authManager;
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
+    private final UsuarioService usuarioService;
 
     public AuthController(AuthenticationManager authManager,
                           UserDetailsService uds,
-                          JwtService jwtService) {
+                          JwtService jwtService,
+                          UsuarioService usuarioService) {
         this.authManager = authManager;
         this.userDetailsService = uds;
         this.jwtService = jwtService;
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/login")
@@ -48,5 +53,13 @@ public class AuthController {
         }
         var access = jwtService.generateAccessToken(user, java.util.Map.of());
         return new JwtResponse(access, request.refreshToken());
+    }
+
+    @GetMapping("/me")
+    public UserSummary me(org.springframework.security.core.Authentication auth) {
+        // auth.getName() = "username" del token → en tu caso, el correo
+        var correo = auth.getName();
+        var u = usuarioService.buscarPorCorreo(correo);
+        return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
     }
 }
