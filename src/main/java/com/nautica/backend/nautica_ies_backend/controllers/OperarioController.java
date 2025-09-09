@@ -4,8 +4,14 @@ package com.nautica.backend.nautica_ies_backend.controllers;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.nautica.backend.nautica_ies_backend.models.Operario;
 import com.nautica.backend.nautica_ies_backend.services.OperarioService;
@@ -49,15 +55,15 @@ public class OperarioController {
     }
 
     // Crear
-    @PostMapping
-    public ResponseEntity<Operario> crear(@RequestBody @Valid Operario operario,
-            UriComponentsBuilder uriBuilder) {
-        Operario creado = service.crear(operario);
-        var location = uriBuilder.path("/api/operarios/{id}")
-                .buildAndExpand(creado.getIdUsuario())
-                .toUri();
-        return ResponseEntity.created(location).body(creado); // 201 + Location
-    }
+    // @PostMapping
+    // public ResponseEntity<Operario> crear(@RequestBody @Valid Operario operario,
+    //         UriComponentsBuilder uriBuilder) {
+    //     Operario creado = service.crear(operario);
+    //     var location = uriBuilder.path("/api/operarios/{id}")
+    //             .buildAndExpand(creado.getIdUsuario())
+    //             .toUri();
+    //     return ResponseEntity.created(location).body(creado); // 201 + Location
+    // }
 
     // Actualizar
     @PutMapping("/{id}")

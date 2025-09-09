@@ -3,8 +3,14 @@ package com.nautica.backend.nautica_ies_backend.controllers;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.services.ClienteService;
@@ -60,20 +66,20 @@ public class ClienteController {
         return ResponseEntity.ok(service.buscarPorNumero(numCliente));
     }
 
-    /**
-     * Crea un nuevo cliente.
-     * SUGERENCIA: el service debe setear rol=CLIENTE y codificar contraseña
-     * (heredada).
-     */
-    @PostMapping
-    public ResponseEntity<Cliente> crear(@RequestBody @Valid Cliente cliente,
-            UriComponentsBuilder uriBuilder) {
-        Cliente creado = service.crear(cliente);
-        var location = uriBuilder.path("/api/clientes/{id}")
-                .buildAndExpand(creado.getIdUsuario()) // <- usar idUsuario heredado
-                .toUri();
-        return ResponseEntity.created(location).body(creado);
-    }
+    // /**
+    //  * Crea un nuevo cliente.
+    //  * SUGERENCIA: el service debe setear rol=CLIENTE y codificar contraseña
+    //  * (heredada).
+    //  */
+    // @PostMapping
+    // public ResponseEntity<Cliente> crear(@RequestBody @Valid Cliente cliente,
+    //         UriComponentsBuilder uriBuilder) {
+    //     Cliente creado = service.crear(cliente);
+    //     var location = uriBuilder.path("/api/clientes/{id}")
+    //             .buildAndExpand(creado.getIdUsuario()) // <- usar idUsuario heredado
+    //             .toUri();
+    //     return ResponseEntity.created(location).body(creado);
+    // }
 
     /**
      * Actualiza un cliente existente.

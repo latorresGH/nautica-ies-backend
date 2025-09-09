@@ -1,10 +1,15 @@
 package com.nautica.backend.nautica_ies_backend.controllers;
 
-import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.nautica.backend.nautica_ies_backend.models.Administrador;
 import com.nautica.backend.nautica_ies_backend.services.AdministradorService;
@@ -34,13 +39,13 @@ public class AdministradorController {
         return ResponseEntity.ok(service.findByCodigoAdmin(codigoAdmin));
     }
 
-    @PostMapping
-    public ResponseEntity<Administrador> create(@RequestBody Administrador admin) {
-        Administrador created = service.create(admin);
-        return ResponseEntity
-                .created(URI.create("/api/administradores/" + created.getIdUsuario()))
-                .body(created);
-    }
+    // @PostMapping
+    // public ResponseEntity<Administrador> create(@RequestBody Administrador admin) {
+    //     Administrador created = service.create(admin);
+    //     return ResponseEntity
+    //             .created(URI.create("/api/administradores/" + created.getIdUsuario()))
+    //             .body(created);
+    // }
 
     @PutMapping("/{id}")
     public ResponseEntity<Administrador> update(@PathVariable Long id, @RequestBody Administrador admin) {
