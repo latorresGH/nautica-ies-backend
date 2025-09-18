@@ -23,7 +23,7 @@ import jakarta.persistence.Table;
 @PrimaryKeyJoinColumn(name = "id_cliente") // PK = FK a usuarios.id_usuario
 public class Cliente extends Usuario {
 
-    @Column(name = "num_cliente", unique = true, nullable = false)
+    @Column(name = "numero_cliente", unique = true, nullable = false)
     private Integer numCliente;
 
     @Enumerated(EnumType.STRING)

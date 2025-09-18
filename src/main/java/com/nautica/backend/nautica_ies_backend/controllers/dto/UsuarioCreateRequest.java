@@ -11,7 +11,7 @@ public record UsuarioCreateRequest(
         @Email @NotBlank String correo,
         @NotBlank String contrasena,
         @NotBlank String dni,
-        @JsonProperty("num_cliente") Integer numCliente, // <-- viene como num_cliente en JSON
+        @JsonProperty("numero_cliente") Integer numCliente, // <-- viene como num_cliente en JSON
         String telefono,
         String direccion,
         String localidad,
