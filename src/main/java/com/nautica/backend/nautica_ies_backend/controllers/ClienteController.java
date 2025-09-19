@@ -1,5 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.controllers;
 
+import java.util.Map;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -98,5 +100,15 @@ public class ClienteController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Long>> contarTodos() {
+        return ResponseEntity.ok(Map.of("total", service.contarTodos()));
+    }
+
+    @GetMapping("/count/activos")
+    public ResponseEntity<Map<String, Long>> contarActivos() {
+        return ResponseEntity.ok(Map.of("total", service.contarActivos()));
     }
 }

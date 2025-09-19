@@ -24,4 +24,12 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     Optional<Cliente> findByNumCliente(Integer numCliente);
 
     boolean existsByNumCliente(Integer numCliente);
+
+    /**
+     * 
+     * Contar clientes a traves del estado activo
+     * 
+     * @return numero de clientes activos
+     *  */ 
+    long countByActivoTrue();
 }

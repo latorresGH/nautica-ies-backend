@@ -125,4 +125,21 @@ public class ClienteService {
         return repo.findByNumCliente(numCliente)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
     }
+
+        /**
+     * Cuenta el número total de usuarios.
+     * @return
+     */
+    public long contarTodos() {
+        return repo.count();
+    }
+
+    /**
+     * Cuenta el número de usuarios activos.
+     * 
+     * @return número de usuarios activos.
+     */
+    public long contarActivos() {
+        return repo.countByActivoTrue();
+    }
 }
