@@ -8,13 +8,15 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nautica.backend.nautica_ies_backend.models.Tarea;
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
 
 public interface TareaRepository extends JpaRepository<Tarea, Long> {
-    Optional<Tarea> findByNumeroTarea(Integer numeroTarea);
+    long countByFecha(LocalDate fecha);
+    long countByFechaAndEstado(LocalDate fecha, EstadoTarea estado);
 
+    Optional<Tarea> findByNumeroTarea(Integer numeroTarea);
     boolean existsByNumeroTarea(Integer numeroTarea);
 
-    List<Tarea> findByOperario_IdUsuario(Long idOperario); // id heredado del padre
-
+    List<Tarea> findByOperario_IdUsuario(Long idOperario);
     List<Tarea> findByFecha(LocalDate fecha);
 }
