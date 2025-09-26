@@ -14,6 +14,7 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     long countByFecha(LocalDate fecha);
     long countByFechaAndEstado(LocalDate fecha, EstadoTarea estado);
 
+
     Optional<Tarea> findByNumeroTarea(Integer numeroTarea);
     boolean existsByNumeroTarea(Integer numeroTarea);
 

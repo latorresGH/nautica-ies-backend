@@ -27,40 +27,35 @@ public interface CuotaRepository extends JpaRepository<Cuota, Long> {
 
     List<Cuota> findByEmbarcacion_IdEmbarcacionAndNumeroMesBetween(Long idEmbarcacion, LocalDate desde, LocalDate hasta);
 
-@Query("""
-  SELECT COALESCE(SUM(c.monto), 0)
-  FROM Cuota c
-  WHERE c.estadoCuota = :estado
-    AND c.numeroMes BETWEEN :desde AND :hasta
-""")
-BigDecimal sumMontoPagadoPorNumeroMes(
-    @Param("estado") EstadoCuota estado,
-    @Param("desde") LocalDate desde,
-    @Param("hasta") LocalDate hasta
-);
+// SUM ingresos por periodo usando numeroMes
+  @Query("""
+    SELECT COALESCE(SUM(c.monto), 0)
+    FROM Cuota c
+    WHERE c.estadoCuota = :estado
+      AND c.numeroMes BETWEEN :desde AND :hasta
+  """)
+  BigDecimal sumMontoPagadoPorNumeroMes(@Param("estado") EstadoCuota estado,
+                                        @Param("desde") LocalDate desde,
+                                        @Param("hasta") LocalDate hasta);
 
+  // Distintos clientes que pagaron/deben en el mes (no dependemos del nombre del id)
+  @Query("""
+    SELECT COUNT(DISTINCT c.cliente)
+    FROM Cuota c
+    WHERE c.numeroMes BETWEEN :desde AND :hasta
+      AND c.estadoCuota = :estado
+  """)
+  long countDistinctClientesPorEstadoEnMes(@Param("estado") EstadoCuota estado,
+                                           @Param("desde") LocalDate desde,
+                                           @Param("hasta") LocalDate hasta);
 
-@Query("""
-  SELECT COUNT(DISTINCT c.cliente.idUsuario)
-  FROM Cuota c
-  WHERE c.numeroMes BETWEEN :desde AND :hasta
-    AND c.estadoCuota = :estado
-""")
-long countDistinctClientesPorEstadoEnMes(
-    @Param("estado") EstadoCuota estado,
-    @Param("desde") LocalDate desde,
-    @Param("hasta") LocalDate hasta
-);
-
-@Query("""
-  SELECT COUNT(DISTINCT c.cliente.idUsuario)
-  FROM Cuota c
-  WHERE c.numeroMes BETWEEN :desde AND :hasta
-    AND c.estadoCuota IN :estados
-""")
-long countDistinctClientesPorEstadosEnMes(
-    @Param("estados") java.util.List<EstadoCuota> estados,
-    @Param("desde") LocalDate desde,
-    @Param("hasta") LocalDate hasta
-);
+  @Query("""
+    SELECT COUNT(DISTINCT c.cliente)
+    FROM Cuota c
+    WHERE c.numeroMes BETWEEN :desde AND :hasta
+      AND c.estadoCuota IN :estados
+  """)
+  long countDistinctClientesPorEstadosEnMes(@Param("estados") List<EstadoCuota> estados,
+                                            @Param("desde") LocalDate desde,
+                                            @Param("hasta") LocalDate hasta);
 }
