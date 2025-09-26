@@ -11,12 +11,12 @@ import org.springframework.data.repository.query.Param;
 import com.nautica.backend.nautica_ies_backend.models.Turno;
 
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
-  long countByFechaTurno(LocalDate fecha);
+  long countByFecha(LocalDate fecha);
 
   @Query("""
         SELECT (COUNT(t) > 0)
         FROM Turno t
-        WHERE t.fechaTurno = :fecha
+        WHERE t.fecha = :fecha
           AND t.embarcacion.idEmbarcacion = :idEmbarcacion
           AND (t.horaInicio < :horaFin AND t.horaFin > :horaInicio)
           AND (:idTurnoExcluido IS NULL OR t.id <> :idTurnoExcluido)

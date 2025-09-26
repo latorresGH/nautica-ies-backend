@@ -42,8 +42,8 @@ public class DashboardService {
     long usuariosActivos   = usuariosRepo.countByActivoTrue();
     long tareasHoy         = tareasRepo.countByFecha(fecha);
     long tareaspendientes  = tareasRepo.countByFechaAndEstado(fecha, EstadoTarea.pendiente);
-    long turnosHoy         = turnosRepo.countByFechaTurno(fecha);
-    long cuotasvencidas    = cuotasRepo.countByEstado(EstadoCuota.vencida);
+    long turnosHoy         = turnosRepo.countByFecha(fecha);
+    long cuotasvencidas    = cuotasRepo.countByEstadoCuota(EstadoCuota.vencida);
 
     // Rango del mes (1er día .. último día)
     YearMonth ym = YearMonth.from(fecha);
@@ -51,8 +51,8 @@ public class DashboardService {
     LocalDate hasta = ym.atEndOfMonth();
 
     // Ingresos (por numeroMes, si no usás fechaPago)
-    BigDecimal ingresosMes = cuotasRepo
-        .sumMontoPagadoPorNumeroMes(EstadoCuota.pagada, desde, hasta);
+ BigDecimal ingresosMes =
+      cuotasRepo.sumMontoPagadoPorNumeroMes(EstadoCuota.pagada, desde, hasta);
 
     // Clientes que PAGARON (distintos) en el mes
     long clientesPagaronMes = cuotasRepo
