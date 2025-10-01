@@ -31,4 +31,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      *         contrario.
      */
     boolean existsByDni(String dni);
+
+    long countByActivoTrue();
 }

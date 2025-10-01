@@ -6,25 +6,26 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.nautica.backend.nautica_ies_backend.models.Turno;
 
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
+  long countByFecha(LocalDate fecha);
 
-  // Overlap por embarcación (misma fecha, franja que se pisa)
   @Query("""
-        select (count(t) > 0)
-        from Turno t
-        where t.fecha = :fecha
-          and t.embarcacion.idEmbarcacion = :idEmbarcacion
-          and (t.horaInicio < :horaFin and t.horaFin > :horaInicio)
-          and (:idTurnoExcluido is null or t.id <> :idTurnoExcluido)
+        SELECT (COUNT(t) > 0)
+        FROM Turno t
+        WHERE t.fecha = :fecha
+          AND t.embarcacion.idEmbarcacion = :idEmbarcacion
+          AND (t.horaInicio < :horaFin AND t.horaFin > :horaInicio)
+          AND (:idTurnoExcluido IS NULL OR t.id <> :idTurnoExcluido)
       """)
-  boolean existsOverlap(LocalDate fecha,
-      LocalTime horaInicio,
-      LocalTime horaFin,
-      Long idEmbarcacion,
-      Long idTurnoExcluido);
+  boolean existsOverlap(@Param("fecha") LocalDate fecha,
+                        @Param("horaInicio") LocalTime horaInicio,
+                        @Param("horaFin") LocalTime horaFin,
+                        @Param("idEmbarcacion") Long idEmbarcacion,
+                        @Param("idTurnoExcluido") Long idTurnoExcluido);
 
   // Cliente y Operario heredan id como idUsuario
   List<Turno> findByCliente_IdUsuarioOrderByFechaDescHoraInicioDesc(Long idCliente);

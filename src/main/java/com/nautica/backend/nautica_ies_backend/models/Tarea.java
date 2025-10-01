@@ -4,6 +4,7 @@ package com.nautica.backend.nautica_ies_backend.models;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoTarea;
 
 import jakarta.persistence.Column;
@@ -39,6 +40,7 @@ public class Tarea {
     @Column(name = "tipo_tarea", nullable = false)
     private TipoTarea tipoTarea; // LAVADO | BOTADO
 
+    
     @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_operario", referencedColumnName = "id_operario", nullable = false)
@@ -52,9 +54,10 @@ public class Tarea {
     @Column(name = "hora", nullable = false)
     private LocalTime hora;
 
-    @NotNull
-    @Column(name = "estado", nullable = false)
-    private String estado; // lo dejamos como TEXT, si querés luego lo pasamos a enum
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false, length = 20)
+    private EstadoTarea estado;
+
 
     // getters/setters
     public Long getIdTarea() {
@@ -101,11 +104,11 @@ public class Tarea {
         this.hora = hora;
     }
 
-    public String getEstado() {
+    public EstadoTarea getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoTarea estado) {
         this.estado = estado;
     }
 }
