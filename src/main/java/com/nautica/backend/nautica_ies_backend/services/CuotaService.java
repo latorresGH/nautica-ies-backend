@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.CuotaResumenDTO;
 import com.nautica.backend.nautica_ies_backend.models.*;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
 import com.nautica.backend.nautica_ies_backend.repository.*;
@@ -110,4 +111,25 @@ public class CuotaService {
             throw new ResourceNotFoundException("Cuota no encontrada");
         repo.deleteById(id);
     }
+
+public CuotaResumenDTO cuotaActualPorCliente(Long clienteId) {
+    return repo.findTopByCliente_IdUsuarioOrderByNumeroMesDesc(clienteId)
+        .map(c -> new CuotaResumenDTO(
+            c.getNumeroMes(),
+            c.getMonto(),
+            c.getEstadoCuota().name() // "pendiente" | "pagada" | "vencida"
+        ))
+        .orElse(null);
+}
+
+// (Opcional) variante con embarcación
+public CuotaResumenDTO cuotaActualPorClienteYEmbarcacion(Long clienteId, Long embarcacionId) {
+    return repo.findTopByCliente_IdUsuarioAndEmbarcacion_IdEmbarcacionOrderByNumeroMesDesc(clienteId, embarcacionId)
+        .map(c -> new CuotaResumenDTO(
+            c.getNumeroMes(),
+            c.getMonto(),
+            c.getEstadoCuota().name()
+        ))
+        .orElse(null);
+}
 }

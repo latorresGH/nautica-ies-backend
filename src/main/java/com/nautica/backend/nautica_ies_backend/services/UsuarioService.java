@@ -7,9 +7,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Map;
+
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
+import com.nautica.backend.nautica_ies_backend.repository.ClienteRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 
 /**
@@ -23,6 +27,7 @@ import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 public class UsuarioService {
 
     private final UsuarioRepository repo;
+    private final ClienteRepository clienteRepo;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -32,9 +37,11 @@ public class UsuarioService {
      * @param repo            Repositorio de usuarios.
      * @param passwordEncoder Codificador de contraseñas.
      */
-    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder, ClienteRepository clienteRepo) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
+        this.clienteRepo = clienteRepo;
+
     }
 
     /**
@@ -126,5 +133,22 @@ public class UsuarioService {
      */
     public Usuario buscarPorCorreo(String correo) {
         return repo.findByCorreo(correo).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    }
+
+        /** Devuelve idUsuario y clienteId a partir del correo. */
+    public Map<String, Object> idsPorCorreo(String correo) {
+        Usuario u = repo.findByCorreo(correo)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + correo));
+
+        Long idUsuario = u.getIdUsuario();
+        // En tu modelo Cliente comparte PK con Usuario, por eso usamos findById(idUsuario)
+        var cliente = clienteRepo.findById(idUsuario).orElse(null);
+        Long clienteId = (cliente != null ? cliente.getIdUsuario() : null);
+
+        return Map.of(
+            "idUsuario", idUsuario,
+            "clienteId", clienteId,
+            "correo", correo
+        );
     }
 }

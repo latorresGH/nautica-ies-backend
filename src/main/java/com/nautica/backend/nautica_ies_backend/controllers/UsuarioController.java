@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.UsuarioCreateRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
@@ -27,6 +28,7 @@ import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
 
 import jakarta.validation.Valid;
+import java.util.Map;
 
 /**
  * Controlador REST para la gestión de {@link Usuario}.
@@ -195,5 +197,12 @@ public class UsuarioController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+
+    /** GET /api/usuarios/ids-por-correo?correo=cliente@nautica.com */
+    @GetMapping("/ids-por-correo")
+    public ResponseEntity<Map<String, Object>> idsPorCorreo(@RequestParam String correo) {
+        return ResponseEntity.ok(service.idsPorCorreo(correo));
     }
 }

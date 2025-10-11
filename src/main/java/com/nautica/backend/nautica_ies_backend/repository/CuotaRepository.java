@@ -21,11 +21,18 @@ public interface CuotaRepository extends JpaRepository<Cuota, Long> {
 
     boolean existsByClienteAndEmbarcacionAndNumeroMes(Cliente c, Embarcacion e, LocalDate numeroMes);
 
+    Optional<Cuota> findTopByCliente_IdUsuarioOrderByNumeroMesDesc(Long clienteId);
+
     Optional<Cuota> findTopByClienteAndEmbarcacionOrderByNumeroPagoDesc(Cliente c, Embarcacion e);
 
     List<Cuota> findByCliente_IdUsuarioAndNumeroMesBetween(Long idCliente, LocalDate desde, LocalDate hasta);
 
     List<Cuota> findByEmbarcacion_IdEmbarcacionAndNumeroMesBetween(Long idEmbarcacion, LocalDate desde, LocalDate hasta);
+
+    Optional<Cuota> findTopByCliente_IdUsuarioAndEmbarcacion_IdEmbarcacionOrderByNumeroMesDesc(
+    Long clienteId, Long embarcacionId
+);
+    
 
 // SUM ingresos por periodo usando numeroMes
   @Query("""
