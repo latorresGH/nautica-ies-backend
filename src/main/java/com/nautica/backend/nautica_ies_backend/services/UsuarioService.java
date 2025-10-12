@@ -151,4 +151,15 @@ public class UsuarioService {
             "correo", correo
         );
     }
+
+    /**
+     * Actualiza el teléfono de un usuario.
+     * @param id       ID del usuario.
+     * @param telefono Nuevo teléfono.
+     */
+    public Usuario actualizarTelefono(Long id, String telefono) {
+    var u = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    u.setTelefono(telefono);
+    return repo.save(u);
+}
 }

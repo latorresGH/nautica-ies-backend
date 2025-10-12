@@ -205,4 +205,15 @@ public class UsuarioController {
     public ResponseEntity<Map<String, Object>> idsPorCorreo(@RequestParam String correo) {
         return ResponseEntity.ok(service.idsPorCorreo(correo));
     }
+
+    @PutMapping("/{id}/telefono")
+    public ResponseEntity<Usuario> actualizarTelefono(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body
+    ) {
+        String tel = body.get("telefono");
+        String normalizado = (tel == null || tel.isBlank()) ? null : tel.trim();
+        Usuario actualizado = service.actualizarTelefono(id, normalizado);
+        return ResponseEntity.ok(actualizado);
+    }
 }
