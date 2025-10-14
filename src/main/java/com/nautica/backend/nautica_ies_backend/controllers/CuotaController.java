@@ -68,6 +68,8 @@ public ResponseEntity<CuotaResumen> cuotaActual(@RequestParam Long clienteId,
     CuotaResumen dto = (embarcacionId == null)
         ? service.cuotaActualPorCliente(clienteId)
         : service.cuotaActualPorClienteYEmbarcacion(clienteId, embarcacionId);
-    return ResponseEntity.ok(dto);
+    return (dto == null)
+        ? ResponseEntity.noContent().build() // 204 sin body y sin Content-Type
+        : ResponseEntity.ok(dto);  
 }
 }

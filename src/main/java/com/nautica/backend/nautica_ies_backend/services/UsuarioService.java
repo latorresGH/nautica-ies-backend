@@ -37,10 +37,11 @@ public class UsuarioService {
      * Constructor que inyecta el repositorio de usuarios y el codificador de
      * contraseñas.
      *
-     * @param repo Repositorio de usuarios.
+     * @param repo            Repositorio de usuarios.
      * @param passwordEncoder Codificador de contraseñas.
      */
-    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder, ClienteRepository clienteRepo, OperarioRepository operarioRepo, AdministradorRepository adminRepo) {
+    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder, ClienteRepository clienteRepo,
+            OperarioRepository operarioRepo, AdministradorRepository adminRepo) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
         this.clienteRepo = clienteRepo;
@@ -54,7 +55,7 @@ public class UsuarioService {
      * @param page Número de página (0-index).
      * @param size Tamaño de página.
      * @param sort Objeto de ordenamiento (por campos como nombre, correo,
-     * etc.).
+     *             etc.).
      * @return Página de usuarios.
      */
     public Page<Usuario> listar(int page, int size, Sort sort) {
@@ -68,8 +69,10 @@ public class UsuarioService {
      * @return Usuario encontrado.
      * @throws ResourceNotFoundException si el usuario no existe.
      */
+    // UsuarioService.java
     public Usuario obtener(Long id) {
-        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        return repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
     /**
@@ -91,7 +94,7 @@ public class UsuarioService {
     /**
      * Actualiza los datos de un usuario existente.
      *
-     * @param id ID del usuario a actualizar.
+     * @param id    ID del usuario a actualizar.
      * @param datos Datos nuevos a aplicar.
      * @return Usuario actualizado.
      * @throws IllegalArgumentException si el DNI o correo ya existen.
@@ -171,7 +174,7 @@ public class UsuarioService {
     /**
      * Actualiza el teléfono de un usuario.
      *
-     * @param id ID del usuario.
+     * @param id       ID del usuario.
      * @param telefono Nuevo teléfono.
      */
     public Usuario actualizarTelefono(Long id, String telefono) {

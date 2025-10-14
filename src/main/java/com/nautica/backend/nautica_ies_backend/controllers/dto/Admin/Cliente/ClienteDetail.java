@@ -1,12 +1,10 @@
 package com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente;
 
-import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
-
 public record ClienteDetail(
         Long id,
         Integer numCliente,
         String tipoCliente,        // texto plano
-        EstadoCliente estadoCliente,
+        Boolean activo,       // <— reemplaza estadoCliente
         String nombre,
         String apellido,
         String dni,

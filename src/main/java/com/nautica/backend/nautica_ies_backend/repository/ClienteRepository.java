@@ -50,7 +50,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
    */
   long countByActivoTrue();
 
-  @Modifying
-  @Query(value = "DELETE FROM clientes WHERE id_cliente = :id", nativeQuery = true)
-  void deleteRowOnlyFromClientes(@Param("id") Long id);
+  @org.springframework.data.jpa.repository.Modifying
+  @org.springframework.data.jpa.repository.Query(value = "DELETE FROM clientes WHERE id_cliente = :id", nativeQuery = true)
+  void deleteRowOnlyFromClientes(@org.springframework.data.repository.query.Param("id") Long id);
+
 }

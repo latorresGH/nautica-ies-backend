@@ -9,21 +9,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente.*;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cliente.ClientePatchRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
-import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
 import com.nautica.backend.nautica_ies_backend.repository.ClienteRepository;
 import com.nautica.backend.nautica_ies_backend.repository.EmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioEmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.CuotaRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 /**
  * Servicio encargado de la lógica de negocio relacionada con {@link Cliente}.
  * Mantiene los métodos existentes (listar/crear/obtener/actualizar/eliminar)
@@ -207,49 +203,42 @@ public Cliente actualizarParcial(Long id, ClientePatchRequest req) {
     public ClienteDetail bajaAdmin(Long id) {
         var c = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
-
-        c.setEstadoCliente(EstadoCliente.inactivo);
         c.setActivo(false);
-
         return toDetail(c);
     }
 
+
     /* ================== MAPPERS A  ================== */
 
-    private ClienteSummary toSummary(Cliente c) {
-        return new ClienteSummary(
-                c.getIdUsuario(),            // id heredado de Usuario
-                c.getNombre(),
-                c.getApellido(),
-                c.getCorreo(),
-                c.getTelefono(),
-                c.getEstadoCliente()
-        );
-    }
+private ClienteSummary toSummary(Cliente c) {
+    return new ClienteSummary(
+        c.getIdUsuario(),                 // si usás getIdUsuario() por herencia
+        c.getNombre(),
+        c.getApellido(),
+        c.getCorreo(),
+        c.getTelefono(),
+        c.getActivo()                     // <— acá
+    );
+}
+
 
     private ClienteDetail toDetail(Cliente c) {
-        Long idEmbarcacion = null;
-        Embarcacion emb = c.getEmbarcacion();
-        if (emb != null) {
-            idEmbarcacion = resolveEmbarcacionId(emb); // adaptá si tu getter se llama distinto
-        }
-
-        return new ClienteDetail(
-                c.getIdUsuario(),
-                c.getNumCliente(),
-                c.getTipoCliente() == null ? null : c.getTipoCliente().name(),
-                c.getEstadoCliente(),
-                c.getNombre(),
-                c.getApellido(),
-                c.getDni(),
-                c.getCorreo(),
-                c.getTelefono(),
-                c.getDireccion(),
-                c.getLocalidad(),
-                c.getProvincia(),
-                c.getFechaAlta() == null ? null : c.getFechaAlta().toString(),
-                idEmbarcacion
-        );
+    return new ClienteDetail(
+        c.getIdUsuario(),
+        c.getNumCliente(),
+        c.getTipoCliente() == null ? null : c.getTipoCliente().name(),
+        c.getActivo(),                    // <— acá
+        c.getNombre(),
+        c.getApellido(),
+        c.getDni(),
+        c.getCorreo(),
+        c.getTelefono(),
+        c.getDireccion(),
+        c.getLocalidad(),
+        c.getProvincia(),
+        c.getFechaAlta() == null ? null : c.getFechaAlta().toString(),
+        c.getEmbarcacion() == null ? null : c.getEmbarcacion().getIdEmbarcacion()
+    );
     }
 
     /**

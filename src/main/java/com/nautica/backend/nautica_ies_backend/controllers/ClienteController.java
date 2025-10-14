@@ -77,9 +77,8 @@ public class ClienteController {
      * Recomiendo que el service valide que el rol siga siendo CLIENTE.
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<Cliente> actualizarParcial(
-            @PathVariable Long id,
-            @RequestBody ClientePatchRequest body) {
+    public ResponseEntity<Cliente> actualizarParcial(@PathVariable Long id,
+                                                    @RequestBody ClientePatchRequest body) {
         return ResponseEntity.ok(service.actualizarParcial(id, body));
     }
 

@@ -20,6 +20,9 @@ import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
 import com.nautica.backend.nautica_ies_backend.models.Administrador;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
+
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Usuario.UsuarioBasico;
+
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoAdministrador;
@@ -78,8 +81,9 @@ public class UsuarioController {
      * @return Usuario encontrado o excepción si no existe.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(service.obtener(id)); // 200 o 404 (via handler)
+    public ResponseEntity<UsuarioBasico> obtener(@PathVariable Long id) {
+        var u = service.obtener(id); // si no existe -> ResourceNotFoundException -> 404
+        return ResponseEntity.ok(UsuarioBasico.from(u));
     }
 
     /**
@@ -132,11 +136,20 @@ public class UsuarioController {
             }
             case "cliente" -> {
                 var c = new Cliente();
-                // ⚠️ CAMPOS OBLIGATORIOS DE CLIENTE
-                c.setNumCliente(req.numCliente()); // <-- AHÍ VA
+
+                if (req.numCliente() == null) {
+                    throw new IllegalArgumentException("numero de cliente es obligatorio cuando rol=cliente");
+                }
+                c.setNumCliente(req.numCliente());
                 c.setFechaAlta(java.time.LocalDate.now());
-                c.setEstadoCliente(EstadoCliente.activo); // default sugerido
-                c.setTipoCliente(TipoCliente.propietario);
+
+                var raw = req.tipoCliente();
+                var tipo = (raw == null || raw.isBlank())
+                        ? com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente.propietario
+                        : com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente
+                                .valueOf(raw.trim().toLowerCase());
+                c.setTipoCliente(tipo);
+
                 yield c;
             }
 
@@ -198,7 +211,6 @@ public class UsuarioController {
         return ResponseEntity.noContent().build(); // 204
     }
 
-
     /** GET /api/usuarios/ids-por-correo?correo=cliente@nautica.com */
     @GetMapping("/ids-por-correo")
     public ResponseEntity<Map<String, Object>> idsPorCorreo(@RequestParam String correo) {
@@ -208,8 +220,7 @@ public class UsuarioController {
     @PutMapping("/{id}/telefono")
     public ResponseEntity<Usuario> actualizarTelefono(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body
-    ) {
+            @RequestBody Map<String, String> body) {
         String tel = body.get("telefono");
         String normalizado = (tel == null || tel.isBlank()) ? null : tel.trim();
         Usuario actualizado = service.actualizarTelefono(id, normalizado);
