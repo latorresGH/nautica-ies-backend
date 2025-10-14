@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
@@ -23,4 +24,9 @@ public interface UsuarioEmbarcacionRepository extends JpaRepository<UsuarioEmbar
           and (ue.hasta is null or ue.hasta >= current_date)
     """)
     List<UsuarioEmbarcacion> findActivasByUsuario(Long usuarioId);
+
+    @Modifying
+    void deleteByUsuario_IdUsuario(Long idUsuario);
+
+    long countByEmbarcacion_IdEmbarcacion(Long idEmbarcacion);
 }

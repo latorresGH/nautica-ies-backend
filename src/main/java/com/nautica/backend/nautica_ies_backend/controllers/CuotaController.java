@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.nautica.backend.nautica_ies_backend.controllers.dto.CuotaResumen;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
 import com.nautica.backend.nautica_ies_backend.models.Cuota;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService;
 

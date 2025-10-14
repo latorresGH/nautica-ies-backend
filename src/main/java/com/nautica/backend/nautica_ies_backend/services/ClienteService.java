@@ -12,12 +12,18 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente.*;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Cliente.ClientePatchRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
 import com.nautica.backend.nautica_ies_backend.repository.ClienteRepository;
+import com.nautica.backend.nautica_ies_backend.repository.EmbarcacionRepository;
+import com.nautica.backend.nautica_ies_backend.repository.UsuarioEmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
-
+import com.nautica.backend.nautica_ies_backend.repository.CuotaRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 /**
  * Servicio encargado de la lógica de negocio relacionada con {@link Cliente}.
  * Mantiene los métodos existentes (listar/crear/obtener/actualizar/eliminar)
@@ -29,10 +35,16 @@ public class ClienteService {
 
     private final ClienteRepository repo;
     private final UsuarioRepository usuarioRepo;
+    private final EmbarcacionRepository embarcacionRepo;
+    private final UsuarioEmbarcacionRepository ueRepo;
+    private final CuotaRepository cuotaRepo;
 
-    public ClienteService(ClienteRepository repo, UsuarioRepository usuarioRepo) {
+    public ClienteService(ClienteRepository repo, UsuarioRepository usuarioRepo, EmbarcacionRepository embarcacionRepo, UsuarioEmbarcacionRepository ueRepo, CuotaRepository cuotaRepo) {
         this.repo = repo;
         this.usuarioRepo = usuarioRepo;
+        this.embarcacionRepo = embarcacionRepo;
+        this.ueRepo = ueRepo;
+        this.cuotaRepo = cuotaRepo;
     }
 
     /* ===========================================================
@@ -79,24 +91,33 @@ public class ClienteService {
     }
 
     /**
-     * Actualiza campos del cliente (versión entidad a entidad).
+     *  Actualiza parcialmente un cliente con los campos no nulos del request.
      */
-    public Cliente actualizar(Long id, Cliente datos) {
-        Cliente cliente = obtener(id); // 404 si no existe
+public Cliente actualizarParcial(Long id, ClientePatchRequest req) {
+    Cliente c = obtener(id); // 404 si no existe
 
-        cliente.setNumCliente(datos.getNumCliente());
-        cliente.setEstadoCliente(datos.getEstadoCliente());
-        cliente.setTipoCliente(datos.getTipoCliente());
-        cliente.setEmbarcacion(datos.getEmbarcacion());
+    if (req.nombre()    != null) c.setNombre(req.nombre().trim());
+    if (req.apellido()  != null) c.setApellido(req.apellido().trim());
 
-        try {
-            return repo.save(cliente);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(
-                HttpStatus.CONFLICT, "Violación de restricción ¿numCliente duplicado?"
-            );
+    if (req.correo()    != null) {
+        String nuevo = req.correo().trim().toLowerCase();
+        // si tenés UsuarioRepository inyectado, validamos unicidad:
+        if (usuarioRepo != null && c.getCorreo() != null &&
+            !c.getCorreo().equalsIgnoreCase(nuevo) &&
+            usuarioRepo.existsByCorreoIgnoreCase(nuevo)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Correo ya usado por otro usuario");
         }
+        c.setCorreo(nuevo);
     }
+
+    if (req.telefono()  != null) c.setTelefono(req.telefono());
+    if (req.direccion() != null) c.setDireccion(req.direccion());
+    if (req.localidad() != null) c.setLocalidad(req.localidad());
+    if (req.provincia() != null) c.setProvincia(req.provincia());
+
+    return repo.save(c);
+}
+
 
     /**
      * Elimina un cliente por ID.
@@ -249,5 +270,56 @@ public class ClienteService {
                 return null;
             }
         }
+        
     }
+
+    /**
+ * Baja definitiva del CLIENTE (elimina fila en `clientes`),
+ * borra relaciones a embarcaciones y elimina embarcaciones que queden sin dueños,
+ * pero mantiene `usuario` con activo=false.
+ * Falla si hay cuotas en deuda (pendiente/vencida).
+ */
+@Transactional
+public void bajaDefinitivaSiSinDeuda(Long id) {
+    var cliente = obtener(id); // 404 si no existe
+
+    // 1) Bloquear si hay deuda
+    var estadosBloqueo = java.util.List.of(EstadoCuota.pendiente, EstadoCuota.vencida);
+    long deudas = cuotaRepo.countByCliente_IdUsuarioAndEstadoCuotaIn(id, estadosBloqueo);
+    if (deudas > 0) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT,
+            "No se puede dar de baja: el cliente tiene cuotas pendientes/vencidas");
+    }
+
+    // 1.b) Eliminar TODAS las cuotas (pagadas o no) del cliente
+    cuotaRepo.deleteByCliente_IdUsuario(id);
+
+    // 2) Capturar embarcaciones asociadas para evaluar orfandad
+    var links = ueRepo.findByUsuario_IdUsuario(id);
+    var posiblesOrfanas = new java.util.HashSet<Long>();
+    for (var ue : links) {
+        if (ue.getEmbarcacion() != null) {
+            posiblesOrfanas.add(ue.getEmbarcacion().getIdEmbarcacion());
+        }
+    }
+
+    // 3) Borrar relaciones usuario_embarcaciones del cliente
+    ueRepo.deleteByUsuario_IdUsuario(id);
+
+    // 4) Eliminar embarcaciones que quedaron sin dueños
+    var aEliminar = new java.util.ArrayList<Long>();
+    for (Long embId : posiblesOrfanas) {
+        long cnt = ueRepo.countByEmbarcacion_IdEmbarcacion(embId);
+        if (cnt == 0) aEliminar.add(embId);
+    }
+    if (!aEliminar.isEmpty()) {
+        embarcacionRepo.deleteByIdEmbarcacionIn(aEliminar);
+    }
+
+    // 5) Marcar usuario inactivo (se conserva la fila en `usuarios`)
+    cliente.setActivo(false);
+
+    // 6) Eliminar SOLO la fila de `clientes` (desaparece de listados de clientes)
+    repo.deleteRowOnlyFromClientes(id);
+}
 }

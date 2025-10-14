@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.*;
@@ -28,6 +29,11 @@ public interface CuotaRepository extends JpaRepository<Cuota, Long> {
   List<Cuota> findByCliente_IdUsuarioAndNumeroMesBetween(Long idCliente, LocalDate desde, LocalDate hasta);
 
   List<Cuota> findByEmbarcacion_IdEmbarcacionAndNumeroMesBetween(Long idEmbarcacion, LocalDate desde, LocalDate hasta);
+
+  long countByCliente_IdUsuarioAndEstadoCuotaIn(Long idUsuario, java.util.Collection<com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota> estados);
+
+  @Modifying
+void deleteByCliente_IdUsuario(Long idUsuario);
 
   Optional<Cuota> findTopByCliente_IdUsuarioAndEmbarcacion_IdEmbarcacionOrderByNumeroMesDesc(
       Long clienteId, Long embarcacionId);

@@ -1,4 +1,4 @@
-package com.nautica.backend.nautica_ies_backend.controllers.dto;
+package com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

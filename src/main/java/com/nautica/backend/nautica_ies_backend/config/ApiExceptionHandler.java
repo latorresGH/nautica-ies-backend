@@ -43,8 +43,41 @@ public class ApiExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex, HttpServletRequest req) {
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(body(req, HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error inesperado"));
+  public ResponseEntity<Map<String, Object>> handleGeneric(
+      Exception ex,
+      jakarta.servlet.http.HttpServletRequest req) {
+
+    // Si en realidad es una ResponseStatusException, delegamos
+    if (ex instanceof org.springframework.web.server.ResponseStatusException rse) {
+      return handleResponseStatus(rse, req);
+    }
+
+    var body = new java.util.LinkedHashMap<String, Object>();
+    body.put("timestamp", java.time.Instant.now());
+    body.put("status", 500);
+    body.put("error", "Internal Server Error");
+    body.put("message", "Ocurrió un error inesperado");
+    body.put("path", req.getRequestURI());
+
+    return ResponseEntity.status(500).body(body);
   }
+
+  @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+  public ResponseEntity<Map<String, Object>> handleResponseStatus(
+      org.springframework.web.server.ResponseStatusException ex,
+      jakarta.servlet.http.HttpServletRequest req) {
+
+    var status = ex.getStatusCode(); // HttpStatusCode
+    var body = new java.util.LinkedHashMap<String, Object>();
+    body.put("timestamp", java.time.Instant.now());
+    body.put("status", status.value());
+    // getReasonPhrase() no existe en HttpStatusCode -> usamos toString() o
+    // resolvemos desde HttpStatus
+    body.put("error", status.toString()); // ej. "409 CONFLICT"
+    body.put("message", ex.getReason()); // <- acá va tu mensaje custom
+    body.put("path", req.getRequestURI());
+
+    return ResponseEntity.status(status).body(body);
+  }
+
 }

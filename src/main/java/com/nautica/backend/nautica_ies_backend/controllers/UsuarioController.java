@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.UsuarioCreateRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Operario;

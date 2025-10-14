@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente.*;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Cliente.ClientePatchRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.services.ClienteService;
 
@@ -75,19 +76,20 @@ public class ClienteController {
      * Actualiza un cliente existente (entidad -> entidad).
      * Recomiendo que el service valide que el rol siga siendo CLIENTE.
      */
-    @PutMapping("/{id}")
-    public ResponseEntity<Cliente> actualizar(@PathVariable Long id,
-            @RequestBody @Valid Cliente cliente) {
-        return ResponseEntity.ok(service.actualizar(id, cliente));
+    @PatchMapping("/{id}")
+    public ResponseEntity<Cliente> actualizarParcial(
+            @PathVariable Long id,
+            @RequestBody ClientePatchRequest body) {
+        return ResponseEntity.ok(service.actualizarParcial(id, body));
     }
 
     /**
      * Elimina un cliente por su ID (entidad).
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        service.eliminar(id);
-        return ResponseEntity.noContent().build(); // 204
+    public ResponseEntity<Void> bajaDefinitiva(@PathVariable Long id) {
+        service.bajaDefinitivaSiSinDeuda(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/count")

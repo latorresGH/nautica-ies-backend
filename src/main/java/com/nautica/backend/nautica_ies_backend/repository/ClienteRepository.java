@@ -1,6 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.*;
@@ -26,26 +27,30 @@ import java.util.Optional;
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
   @Query("""
-      SELECT c FROM Cliente c
-      WHERE (:q IS NULL OR :q = '' OR
-            lower(c.nombre)   LIKE lower(concat('%', :q, '%')) OR
-            lower(c.apellido) LIKE lower(concat('%', :q, '%')) OR
-            lower(c.correo)   LIKE lower(concat('%', :q, '%')) OR
-            c.telefono        LIKE concat('%', :q, '%') OR
-            c.dni             LIKE concat('%', :q, '%'))
-      ORDER BY c.idUsuario DESC
-    """)
-    Page<Cliente> buscar(@Param("q") String buscar, Pageable pageable);
+        SELECT c FROM Cliente c
+        WHERE (:q IS NULL OR :q = '' OR
+              lower(c.nombre)   LIKE lower(concat('%', :q, '%')) OR
+              lower(c.apellido) LIKE lower(concat('%', :q, '%')) OR
+              lower(c.correo)   LIKE lower(concat('%', :q, '%')) OR
+              c.telefono        LIKE concat('%', :q, '%') OR
+              c.dni             LIKE concat('%', :q, '%'))
+        ORDER BY c.idUsuario DESC
+      """)
+  Page<Cliente> buscar(@Param("q") String buscar, Pageable pageable);
 
-    Optional<Cliente> findByNumCliente(Integer numCliente);
+  Optional<Cliente> findByNumCliente(Integer numCliente);
 
-    boolean existsByNumCliente(Integer numCliente);
+  boolean existsByNumCliente(Integer numCliente);
 
-    /**
-     * 
-     * Contar clientes a traves del estado activo
-     * 
-     * @return numero de clientes activos
-     *  */ 
-    long countByActivoTrue();
+  /**
+   * 
+   * Contar clientes a traves del estado activo
+   * 
+   * @return numero de clientes activos
+   */
+  long countByActivoTrue();
+
+  @Modifying
+  @Query(value = "DELETE FROM clientes WHERE id_cliente = :id", nativeQuery = true)
+  void deleteRowOnlyFromClientes(@Param("id") Long id);
 }
