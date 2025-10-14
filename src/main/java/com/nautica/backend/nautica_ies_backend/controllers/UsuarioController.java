@@ -137,7 +137,7 @@ public class UsuarioController {
                 c.setNumCliente(req.numCliente()); // <-- AHÍ VA
                 c.setFechaAlta(java.time.LocalDate.now());
                 c.setEstadoCliente(EstadoCliente.activo); // default sugerido
-                c.setTipoCliente(TipoCliente.cliente);
+                c.setTipoCliente(TipoCliente.propietario);
                 yield c;
             }
 

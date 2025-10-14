@@ -32,7 +32,7 @@ public class Cliente extends Usuario {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_cliente", nullable = false, length = 20)
-    private TipoCliente tipoCliente = TipoCliente.cliente;
+    private TipoCliente tipoCliente = TipoCliente.propietario;
 
     @Column(name = "fecha_alta")
     private LocalDate fechaAlta = LocalDate.now();

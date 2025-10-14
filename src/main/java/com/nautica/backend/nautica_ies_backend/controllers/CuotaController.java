@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.nautica.backend.nautica_ies_backend.controllers.dto.CuotaResumenDTO;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.CuotaResumen;
 import com.nautica.backend.nautica_ies_backend.models.Cuota;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService;
 
@@ -57,15 +57,15 @@ public class CuotaController {
     }
 
     // @GetMapping("/by-cliente/actual")
-    // public ResponseEntity<CuotaResumenDTO> cuotaActual(@RequestParam Long clienteId) {
+    // public ResponseEntity<CuotaResumen> cuotaActual(@RequestParam Long clienteId) {
     //     return ResponseEntity.ok(service.cuotaActualPorCliente(clienteId));
     // }
 
     // GET /api/cuotas/by-cliente/actual?clienteId=1
 @GetMapping("/by-cliente/actual")
-public ResponseEntity<CuotaResumenDTO> cuotaActual(@RequestParam Long clienteId,
+public ResponseEntity<CuotaResumen> cuotaActual(@RequestParam Long clienteId,
                                                    @RequestParam(required = false) Long embarcacionId) {
-    CuotaResumenDTO dto = (embarcacionId == null)
+    CuotaResumen dto = (embarcacionId == null)
         ? service.cuotaActualPorCliente(clienteId)
         : service.cuotaActualPorClienteYEmbarcacion(clienteId, embarcacionId);
     return ResponseEntity.ok(dto);
