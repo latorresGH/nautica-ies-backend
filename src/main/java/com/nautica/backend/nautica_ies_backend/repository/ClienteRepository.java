@@ -1,6 +1,10 @@
 package com.nautica.backend.nautica_ies_backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.*;
 
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import java.util.Optional;
@@ -21,15 +25,33 @@ import java.util.Optional;
  * </ul>
  */
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
-    Optional<Cliente> findByNumCliente(Integer numCliente);
 
-    boolean existsByNumCliente(Integer numCliente);
+  @Query("""
+        SELECT c FROM Cliente c
+        WHERE (:q IS NULL OR :q = '' OR
+              lower(c.nombre)   LIKE lower(concat('%', :q, '%')) OR
+              lower(c.apellido) LIKE lower(concat('%', :q, '%')) OR
+              lower(c.correo)   LIKE lower(concat('%', :q, '%')) OR
+              c.telefono        LIKE concat('%', :q, '%') OR
+              c.dni             LIKE concat('%', :q, '%'))
+        ORDER BY c.idUsuario DESC
+      """)
+  Page<Cliente> buscar(@Param("q") String buscar, Pageable pageable);
 
-    /**
-     * 
-     * Contar clientes a traves del estado activo
-     * 
-     * @return numero de clientes activos
-     *  */ 
-    long countByActivoTrue();
+  Optional<Cliente> findByNumCliente(Integer numCliente);
+
+  boolean existsByNumCliente(Integer numCliente);
+
+  /**
+   * 
+   * Contar clientes a traves del estado activo
+   * 
+   * @return numero de clientes activos
+   */
+  long countByActivoTrue();
+
+  @org.springframework.data.jpa.repository.Modifying
+  @org.springframework.data.jpa.repository.Query(value = "DELETE FROM clientes WHERE id_cliente = :id", nativeQuery = true)
+  void deleteRowOnlyFromClientes(@org.springframework.data.repository.query.Param("id") Long id);
+
 }

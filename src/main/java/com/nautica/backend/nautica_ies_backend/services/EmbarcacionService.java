@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.EmbarcacionResumenDTO;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
@@ -123,5 +124,18 @@ public class EmbarcacionService {
     public List<UsuarioEmbarcacion> listarUsuarios(Long idEmbarcacion) {
         obtener(idEmbarcacion); // valida existencia
         return ueRepo.findByEmbarcacion_IdEmbarcacion(idEmbarcacion);
+    }
+
+    public List<EmbarcacionResumenDTO> listarPorUsuario(Long usuarioId) {
+    var relaciones = ueRepo.findActivasByUsuario(usuarioId);
+    return relaciones.stream()
+        .map(UsuarioEmbarcacion::getEmbarcacion)
+        .distinct()
+        .map(e -> new EmbarcacionResumenDTO(
+            e.getIdEmbarcacion(),
+            e.getNombre(),
+            e.getNumMatricula()
+        ))
+        .toList();
     }
 }

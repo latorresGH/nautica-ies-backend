@@ -11,7 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.models.*;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
+import com.nautica.backend.nautica_ies_backend.models.enums.FormaPago;
 import com.nautica.backend.nautica_ies_backend.repository.*;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoCreateRequest;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoSummary;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoDetail;
 
 @Service
 public class CuotaService {
@@ -109,5 +114,128 @@ public class CuotaService {
         if (!repo.existsById(id))
             throw new ResourceNotFoundException("Cuota no encontrada");
         repo.deleteById(id);
+    }
+
+    public CuotaResumen cuotaActualPorCliente(Long clienteId) {
+        return repo.findTopByCliente_IdUsuarioOrderByNumeroMesDesc(clienteId)
+                .map(c -> new CuotaResumen(
+                        c.getNumeroMes(),
+                        c.getMonto(),
+                        c.getEstadoCuota().name() // "pendiente" | "pagada" | "vencida"
+                ))
+                .orElse(null);
+    }
+
+    // (Opcional) variante con embarcación
+    public CuotaResumen cuotaActualPorClienteYEmbarcacion(Long clienteId, Long embarcacionId) {
+        return repo.findTopByCliente_IdUsuarioAndEmbarcacion_IdEmbarcacionOrderByNumeroMesDesc(clienteId, embarcacionId)
+                .map(c -> new CuotaResumen(
+                        c.getNumeroMes(),
+                        c.getMonto(),
+                        c.getEstadoCuota().name()))
+                .orElse(null);
+    }
+
+    // POST /api/pagos
+    @Transactional
+    public PagoDetail registrarPago(PagoCreateRequest req) {
+        Cuota c = obtener(req.cuotaId()); // 404 si no existe
+
+        // Validaciones simples
+        if (c.getEstadoCuota() == EstadoCuota.pagada) {
+            throw new IllegalArgumentException("La cuota ya se encuentra pagada");
+        }
+
+        // Medio (FormaPago) — case-insensitive
+        FormaPago medio;
+        try {
+            medio = FormaPago.valueOf(req.medio().trim().toLowerCase());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Medio de pago inválido: " + req.medio());
+        }
+
+        // Fecha por defecto: hoy
+        java.time.LocalDate fecha = (req.fecha() != null) ? req.fecha() : java.time.LocalDate.now();
+
+        // Si viene monto, actualizamos
+        if (req.monto() != null) {
+            if (req.monto().signum() <= 0)
+                throw new IllegalArgumentException("Monto inválido");
+            c.setMonto(req.monto());
+        }
+
+        c.setFormaPago(medio);
+        c.setFechaPago(fecha);
+        c.setEstadoCuota(EstadoCuota.pagada);
+
+        // devolvemos detalle
+        return toPagoDetail(c);
+    }
+
+    // GET /api/pagos
+    @Transactional(readOnly = true)
+    public Page<PagoSummary> listarPagos(Long clienteId, java.time.LocalDate desde,
+            java.time.LocalDate hasta, String medioStr,
+            Pageable pageable) {
+        FormaPago medio = null;
+        if (medioStr != null && !medioStr.isBlank()) {
+            try {
+                medio = FormaPago.valueOf(medioStr.trim().toLowerCase());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Medio de pago inválido: " + medioStr);
+            }
+        }
+        return repo.buscarPagos(clienteId, desde, hasta, medio, pageable)
+                .map(this::toPagoSummary);
+    }
+
+    // GET /api/pagos/{id}
+    @Transactional(readOnly = true)
+    public PagoDetail obtenerPago(Long id) {
+        Cuota c = obtener(id);
+        if (c.getEstadoCuota() != EstadoCuota.pagada) {
+            throw new ResourceNotFoundException("Pago no encontrado"); // o 404 si no está pagada
+        }
+        return toPagoDetail(c);
+    }
+
+    /* ================== MAPPERS A (PAGOS) ================== */
+
+    private PagoSummary toPagoSummary(Cuota c) {
+        Long clienteId = (c.getCliente() != null) ? c.getCliente().getIdUsuario() : null;
+        String clienteNombre = (c.getCliente() != null)
+                ? (c.getCliente().getNombre() + " " + c.getCliente().getApellido()).trim()
+                : null;
+        Long embarcacionId = (c.getEmbarcacion() != null) ? c.getEmbarcacion().getIdEmbarcacion() : null;
+
+        return new PagoSummary(
+                c.getIdCuota(),
+                clienteId,
+                clienteNombre,
+                embarcacionId,
+                c.getNumeroMes(),
+                c.getFechaPago(),
+                c.getMonto(),
+                c.getFormaPago() == null ? null : c.getFormaPago().name());
+    }
+
+    private PagoDetail toPagoDetail(Cuota c) {
+        Long clienteId = (c.getCliente() != null) ? c.getCliente().getIdUsuario() : null;
+        String clienteNombre = (c.getCliente() != null)
+                ? (c.getCliente().getNombre() + " " + c.getCliente().getApellido()).trim()
+                : null;
+        Long embarcacionId = (c.getEmbarcacion() != null) ? c.getEmbarcacion().getIdEmbarcacion() : null;
+
+        return new PagoDetail(
+                c.getIdCuota(),
+                c.getNumeroPago(),
+                clienteId,
+                clienteNombre,
+                embarcacionId,
+                c.getNumeroMes(),
+                c.getFechaPago(),
+                c.getMonto(),
+                c.getFormaPago() == null ? null : c.getFormaPago().name(),
+                c.getEstadoCuota() == null ? null : c.getEstadoCuota().name());
     }
 }

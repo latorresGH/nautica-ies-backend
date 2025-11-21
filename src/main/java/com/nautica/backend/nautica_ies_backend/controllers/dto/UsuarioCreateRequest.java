@@ -1,8 +1,6 @@
-// src/main/java/com/nautica/backend/nautica_ies_backend/controllers/dto/UsuarioCreateRequest.java
 package com.nautica.backend.nautica_ies_backend.controllers.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 
 public record UsuarioCreateRequest(
@@ -11,19 +9,33 @@ public record UsuarioCreateRequest(
         @Email @NotBlank String correo,
         @NotBlank String contrasena,
         @NotBlank String dni,
-        @JsonProperty("numero_cliente") Integer numCliente, // <-- viene como num_cliente en JSON
+
+        // Acepta: numCliente | num_cliente | numeroCliente | numero_cliente
+        @JsonAlias({"numCliente","num_cliente","numeroCliente","numero_cliente"})
+        Integer numCliente,
+
+        // "propietario" | "autorizado" (opcional; si no viene, default en el controller)
+        String tipoCliente,
+
         String telefono,
         String direccion,
         String localidad,
         String provincia,
-        @NotBlank String rol, // ej: "admin" | "operario" | "cliente"
-        @NotNull Boolean activo,
-        @JsonProperty("codigo_admin") String codigoAdmin,
-        @JsonProperty("tipo_admin") String tipoAdmin, // "gerente" | "jefe" | "admin_usuarios"
+
+        // "admin" | "operario" | "cliente"
+        @NotBlank String rol,
+
+        // opcional; si viene null, lo seteamos a true en el controller o en el service
+        Boolean activo,
+
+        // Acepta: codigoAdmin | codigo_admin
+        @JsonAlias({"codigoAdmin","codigo_admin"})
+        String codigoAdmin,
+
+        // Acepta: tipoAdmin | tipo_admin
+        @JsonAlias({"tipoAdmin","tipo_admin"})
+        String tipoAdmin,
+
         String legajo,
         String puesto
-){
-        public UsuarioCreateRequest {
-                if (activo == null) activo = Boolean.TRUE; // default
-    }
-}
+) {}

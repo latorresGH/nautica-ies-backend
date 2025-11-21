@@ -6,9 +6,12 @@ import com.nautica.backend.nautica_ies_backend.repository.CierreExcepcionalRepos
 import com.nautica.backend.nautica_ies_backend.repository.HorarioOperacionRepository;
 import org.springframework.stereotype.Service;
 
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Calendario.*;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.*;
 
 @Service
@@ -70,5 +73,87 @@ public class CalendarioService {
     private int mapTo1to7(DayOfWeek dow) {
         // DayOfWeek.MONDAY=1 ... SUNDAY=7 -> ya coincide
         return dow.getValue();
+    }
+
+    public List<DiaMes> calendarioDelMes(YearMonth mes) {
+        LocalDate from = mes.atDay(1);
+        LocalDate to = mes.atEndOfMonth();
+        // Reusamos tu calendario(from,to) y mapeamos a la forma solicitada
+        var base = calendario(from, to);
+        List<DiaMes> out = new ArrayList<>(base.size());
+        for (var d : base) {
+            out.add(mapDia(d));
+        }
+        return out;
+    }
+
+    public void habilitarDia(LocalDate fecha) {
+        var ce = excepcionRepo.findByFecha(fecha).orElseGet(() -> {
+            var n = new CierreExcepcional();
+            n.setFecha(fecha);
+            return n;
+        });
+        ce.setAbierto(true);
+        // horas null => usa horario semanal; si preferís, podés dejar horas para
+        // override
+        ce.setHoraApertura(null);
+        ce.setHoraCierre(null);
+        ce.setMotivo(null);
+        excepcionRepo.save(ce);
+    }
+
+    public void deshabilitarDia(LocalDate fecha, String motivo) {
+        var ce = excepcionRepo.findByFecha(fecha).orElseGet(() -> {
+            var n = new CierreExcepcional();
+            n.setFecha(fecha);
+            return n;
+        });
+        ce.setAbierto(false);
+        ce.setHoraApertura(null);
+        ce.setHoraCierre(null);
+        ce.setMotivo(motivo);
+        excepcionRepo.save(ce);
+    }
+
+    public void cambiarHorarios(LocalDate fecha, List<Franja> franjas) {
+        // soportamos 0 o 1 franja por límite de tu modelo
+        if (franjas == null)
+            throw new IllegalArgumentException("franjas requeridas");
+        if (franjas.size() > 1)
+            throw new IllegalArgumentException("Por ahora solo se admite 1 franja");
+        if (franjas.size() == 0) {
+            // sin franja => cerramos ese día explícitamente
+            deshabilitarDia(fecha, null);
+            return;
+        }
+        var f = franjas.get(0);
+        if (f.desde() == null || f.hasta() == null || !f.desde().isBefore(f.hasta())) {
+            throw new IllegalArgumentException("Franja inválida: desde < hasta");
+        }
+
+        var ce = excepcionRepo.findByFecha(fecha).orElseGet(() -> {
+            var n = new CierreExcepcional();
+            n.setFecha(fecha);
+            return n;
+        });
+        ce.setAbierto(true);
+        ce.setHoraApertura(f.desde());
+        ce.setHoraCierre(f.hasta());
+        ce.setMotivo(null);
+        excepcionRepo.save(ce);
+    }
+
+    // ================== HELPERS PRIVADOS ==================
+
+    private DiaMes mapDia(DiaDTO d) {
+        boolean disponible = d.abierto();
+        List<Franja> franjas = new ArrayList<>();
+        if (disponible && d.horaApertura() != null && d.horaCierre() != null) {
+            franjas.add(new Franja(d.horaApertura(), d.horaCierre()));
+        }
+        // Si está abierto pero sin horas en la excepción, tus horarios semanales ya
+        // vinieron en d.horaApertura/horaCierre (el calendario(from,to) ya resolvió),
+        // por lo que este mapping funciona igual.
+        return new DiaMes(d.fecha(), disponible, franjas);
     }
 }

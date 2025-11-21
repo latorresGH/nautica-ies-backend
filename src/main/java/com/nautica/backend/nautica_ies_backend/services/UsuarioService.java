@@ -7,9 +7,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Map;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
+import com.nautica.backend.nautica_ies_backend.repository.AdministradorRepository;
+import com.nautica.backend.nautica_ies_backend.repository.ClienteRepository;
+import com.nautica.backend.nautica_ies_backend.repository.OperarioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 
 /**
@@ -22,7 +27,10 @@ import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 @Service
 public class UsuarioService {
 
+    private final OperarioRepository operarioRepo;
+    private final AdministradorRepository adminRepo;
     private final UsuarioRepository repo;
+    private final ClienteRepository clienteRepo;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -32,9 +40,13 @@ public class UsuarioService {
      * @param repo            Repositorio de usuarios.
      * @param passwordEncoder Codificador de contraseñas.
      */
-    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UsuarioRepository repo, PasswordEncoder passwordEncoder, ClienteRepository clienteRepo,
+            OperarioRepository operarioRepo, AdministradorRepository adminRepo) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
+        this.clienteRepo = clienteRepo;
+        this.operarioRepo = operarioRepo;
+        this.adminRepo = adminRepo;
     }
 
     /**
@@ -42,7 +54,8 @@ public class UsuarioService {
      *
      * @param page Número de página (0-index).
      * @param size Tamaño de página.
-     * @param sort Objeto de ordenamiento (por campos como nombre, correo, etc.).
+     * @param sort Objeto de ordenamiento (por campos como nombre, correo,
+     *             etc.).
      * @return Página de usuarios.
      */
     public Page<Usuario> listar(int page, int size, Sort sort) {
@@ -56,13 +69,15 @@ public class UsuarioService {
      * @return Usuario encontrado.
      * @throws ResourceNotFoundException si el usuario no existe.
      */
+    // UsuarioService.java
     public Usuario obtener(Long id) {
-        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        return repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
     /**
      * Crea un nuevo usuario y codifica su contraseña antes de guardarlo.
-     * 
+     *
      * @param usuario Usuario a crear.
      * @return Usuario creado.
      * @throws IllegalArgumentException si el DNI o correo ya existen.
@@ -112,8 +127,9 @@ public class UsuarioService {
      * @throws ResourceNotFoundException si el usuario no existe.
      */
     public void eliminar(Long id) {
-        if (!repo.existsById(id))
+        if (!repo.existsById(id)) {
             throw new ResourceNotFoundException("Usuario no encontrado");
+        }
         repo.deleteById(id);
     }
 
@@ -126,5 +142,44 @@ public class UsuarioService {
      */
     public Usuario buscarPorCorreo(String correo) {
         return repo.findByCorreo(correo).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    }
+
+    /**
+     * Devuelve idUsuario y clienteId a partir del correo.
+     */
+    public Map<String, Object> idsPorCorreo(String correo) {
+        if (correo == null || correo.isBlank()) {
+            throw new IllegalArgumentException("Debe indicar el correo");
+        }
+        String cTrim = correo.trim();
+
+        Usuario u = repo.findByCorreo(cTrim)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + cTrim));
+
+        Long idUsuario = u.getIdUsuario();
+        Long idOperario = operarioRepo.findById(idUsuario).map(o -> o.getIdUsuario()).orElse(null);
+        Long idCliente = clienteRepo.findById(idUsuario).map(cl -> cl.getIdUsuario()).orElse(null);
+        Long idAdmin = adminRepo.findById(idUsuario).map(a -> a.getIdUsuario()).orElse(null);
+
+        var out = new java.util.LinkedHashMap<String, Object>();
+        out.put("idUsuario", idUsuario);
+        out.put("rol", u.getRol());
+        out.put("idOperario", idOperario);
+        out.put("idCliente", idCliente);
+        out.put("idAdministrador", idAdmin);
+        out.put("correo", cTrim);
+        return out;
+    }
+
+    /**
+     * Actualiza el teléfono de un usuario.
+     *
+     * @param id       ID del usuario.
+     * @param telefono Nuevo teléfono.
+     */
+    public Usuario actualizarTelefono(Long id, String telefono) {
+        var u = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        u.setTelefono(telefono);
+        return repo.save(u);
     }
 }

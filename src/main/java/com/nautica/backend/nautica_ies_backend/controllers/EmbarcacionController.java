@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nautica.backend.nautica_ies_backend.controllers.dto.EmbarcacionResumenDTO;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolEnEmbarcacion;
@@ -26,6 +27,10 @@ public class EmbarcacionController {
         this.service = service;
     }
 
+        @GetMapping("/by-usuario")
+    public ResponseEntity<List<EmbarcacionResumenDTO>> porUsuario(@RequestParam("usuarioId") Long usuarioId) {
+        return ResponseEntity.ok(service.listarPorUsuario(usuarioId));
+    }
     // Listado paginado
     @GetMapping
     public ResponseEntity<Page<Embarcacion>> listar(
