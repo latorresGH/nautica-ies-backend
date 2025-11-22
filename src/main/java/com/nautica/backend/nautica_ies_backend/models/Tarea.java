@@ -40,7 +40,6 @@ public class Tarea {
     @Column(name = "tipo_tarea", nullable = false)
     private TipoTarea tipoTarea; // LAVADO | BOTADO
 
-    
     @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_operario", referencedColumnName = "id_operario", nullable = false)
@@ -58,6 +57,10 @@ public class Tarea {
     @Column(name = "estado", nullable = false, length = 20)
     private EstadoTarea estado;
 
+    // En Tarea
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "id_turno")
+    private Turno turno;
 
     // getters/setters
     public Long getIdTarea() {
@@ -66,6 +69,14 @@ public class Tarea {
 
     public Integer getNumeroTarea() {
         return numeroTarea;
+    }
+
+    public Turno getTurno() {
+        return turno;
+    }
+
+    public void setTurno(Turno turno) {
+        this.turno = turno;
     }
 
     public void setNumeroTarea(Integer numeroTarea) {

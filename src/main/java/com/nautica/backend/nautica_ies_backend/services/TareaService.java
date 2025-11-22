@@ -1,7 +1,13 @@
 // src/main/java/com/nautica/backend/nautica_ies_backend/services/TareaService.java
 package com.nautica.backend.nautica_ies_backend.services;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -12,8 +18,11 @@ import org.springframework.stereotype.Service;
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
 import com.nautica.backend.nautica_ies_backend.models.Tarea;
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
 import com.nautica.backend.nautica_ies_backend.repository.OperarioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.TareaRepository;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Tareas.BarSemana;
+
 
 @Service
 public class TareaService {
@@ -83,4 +92,58 @@ public class TareaService {
             throw new ResourceNotFoundException("Tarea no encontrada");
         repo.deleteById(id);
     }
+
+        public List<Tarea> listarPorFecha(LocalDate fecha) {
+        return repo.findByFechaOrderByHoraAsc(fecha);
+    }
+
+    // 🔹 NUEVO: resumen semanal para el gráfico
+    public BarSemana resumenSemana(int offset) {
+        // Misma zona que el Dashboard
+        LocalDate hoy = LocalDate.now(ZoneId.of("America/Argentina/Cordoba"));
+
+        // offset=0 -> semana actual, offset=1 -> semana pasada (S-1)
+        LocalDate base = hoy.minusWeeks(offset);
+        LocalDate lunes   = base.with(DayOfWeek.MONDAY);
+        LocalDate domingo = base.with(DayOfWeek.SUNDAY);
+
+        // ⚠️ Usa el nombre real de tu enum
+        // Si tu enum es EstadoTarea.realizada (minúscula), dejalo así:
+        List<Tarea> realizadas = repo.findByFechaBetweenAndEstado(
+                lunes,
+                domingo,
+                EstadoTarea.realizado
+        );
+
+        Map<LocalDate, Long> conteo = new HashMap<>();
+        for (Tarea t : realizadas) {
+            LocalDate f = t.getFecha();
+            conteo.put(f, conteo.getOrDefault(f, 0L) + 1L);
+        }
+
+        List<String> labels = new ArrayList<>();
+        List<Long> values   = new ArrayList<>();
+
+        LocalDate cursor = lunes;
+        while (!cursor.isAfter(domingo)) {
+            DayOfWeek dow = cursor.getDayOfWeek();
+            String label = switch (dow) {
+                case MONDAY    -> "Lun";
+                case TUESDAY   -> "Mar";
+                case WEDNESDAY -> "Mié";
+                case THURSDAY  -> "Jue";
+                case FRIDAY    -> "Vie";
+                case SATURDAY  -> "Sáb";
+                case SUNDAY    -> "Dom";
+            };
+
+            labels.add(label);
+            values.add(conteo.getOrDefault(cursor, 0L));
+
+            cursor = cursor.plusDays(1);
+        }
+
+        return new BarSemana(labels, values);
+    }
+
 }
