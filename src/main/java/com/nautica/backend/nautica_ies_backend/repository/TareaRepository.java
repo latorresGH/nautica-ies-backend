@@ -29,4 +29,5 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     List<Tarea> findByFechaOrderByHoraAsc(LocalDate fecha);
     // 🔹 NUEVO: tareas en un rango de fechas con un estado
     List<Tarea> findByFechaBetweenAndEstado(LocalDate desde, LocalDate hasta, EstadoTarea estado);
+    Optional<Tarea> findByTurno_Id(Long id);
 }
