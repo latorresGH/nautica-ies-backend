@@ -40,9 +40,8 @@ public class Tarea {
     @Column(name = "tipo_tarea", nullable = false)
     private TipoTarea tipoTarea; // LAVADO | BOTADO
 
-    @NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_operario", referencedColumnName = "id_operario", nullable = false)
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "id_operario", referencedColumnName = "id_operario", nullable = true)
     private Operario operario;
 
     @NotNull

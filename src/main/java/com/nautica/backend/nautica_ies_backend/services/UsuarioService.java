@@ -75,6 +75,9 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
+
+
+
     /**
      * Crea un nuevo usuario y codifica su contraseña antes de guardarlo.
      *
@@ -141,7 +144,8 @@ public class UsuarioService {
      * @throws ResourceNotFoundException si el usuario no existe.
      */
     public Usuario buscarPorCorreo(String correo) {
-        return repo.findByCorreo(correo).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        return repo.findByCorreo(correo)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado para el correo: " + correo));
     }
 
     /**

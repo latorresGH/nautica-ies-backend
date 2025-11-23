@@ -22,6 +22,7 @@ import com.nautica.backend.nautica_ies_backend.repository.TurnoRepository;
 import com.nautica.backend.nautica_ies_backend.repository.TareaRepository;
 import com.nautica.backend.nautica_ies_backend.models.Tarea;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
+import com.nautica.backend.nautica_ies_backend.models.enums.TipoTarea;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -91,7 +92,7 @@ public class TurnoService {
 
   private void validarHoras(LocalTime inicio, LocalTime fin) {
     if (!fin.isAfter(inicio))
-      throw new IllegalArgumentException("hora_fin debe ser posterior a hora_inicio");
+      throw new IllegalArgumentException("TURNOS_HORA_POSTERIOR");
   }
 
   private void verificarSolapamiento(Long idTurnoExcluido,
@@ -101,7 +102,7 @@ public class TurnoService {
       Long idEmbarcacion) {
     boolean overlap = turnoRepo.existsOverlap(fecha, inicio, fin, idEmbarcacion, idTurnoExcluido);
     if (overlap)
-      throw new IllegalStateException("Ya existe un turno superpuesto para esa embarcación");
+          throw new IllegalStateException("TURNOS_EMBARCACION_SOLAPADOS");
   }
 
   /*
@@ -120,59 +121,88 @@ public class TurnoService {
         .toList();
   }
 
-  // 🔹 2) Solicitar turno desde el DTO del cliente
-  @Transactional
-  public TurnoCliente solicitarTurno(TurnoSolicitudRequest req) {
-    // Ojo: ajustá los getters del record a cómo lo definiste
-    Cliente cliente = clienteRepo.findById(req.clienteId())
-        .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+@Transactional
+public TurnoCliente solicitarTurno(TurnoSolicitudRequest req) {
+  // buscar cliente y embarcación
+  Cliente cliente = clienteRepo.findById(req.clienteId())
+      .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
 
-    Embarcacion emb = embarRepo.findById(req.idEmbarcacion())
-        .orElseThrow(() -> new EntityNotFoundException("Embarcación no encontrada"));
+  Embarcacion emb = embarRepo.findById(req.idEmbarcacion())
+      .orElseThrow(() -> new EntityNotFoundException("Embarcación no encontrada"));
 
-    Turno t = new Turno();
-    t.setCliente(cliente);
-    t.setEmbarcacion(emb);
-    t.setFecha(req.fecha());
-    t.setHoraInicio(req.horaInicio());
-
-    // ⬇️ ya no usamos req.horaFin(): definimos un bloque fijo de 30 minutos
-  // ⬅️ AHORA
-LocalTime horaFin = req.horaInicio().plusMinutes(15);
-
-
-
-    t.setHoraFin(horaFin);
-
-    // ⬇️ NO tenemos estado/tipo en Turno, eso vive en Tarea
-    // t.setEstado("pendiente"); // ❌ sacar
-    // t.setTipo(req.tipo()); // ❌ sacar
-
-    validarHoras(t.getHoraInicio(), t.getHoraFin());
-
-// ya tenés el check por embarcación:
-verificarSolapamiento(
-    null,
-    t.getFecha(),
-    t.getHoraInicio(),
-    t.getHoraFin(),
-    t.getEmbarcacion().getIdEmbarcacion()
-);
-
-// ⬅️ nuevo: check global de capacidad (máx. 2)
-verificarCapacidadGlobal(
-    t.getFecha(),
-    t.getHoraInicio(),
-    t.getHoraFin()
-);
-
-Turno guardado = turnoRepo.save(t);
-
-    // toTurnoCliente(...) se encarga de mirar la Tarea asociada (si existe)
-    // y devolver estado/tipo al front. Si aún no hay Tarea, podés devolver
-    // "pendiente" por defecto ahí.
-    return toTurnoCliente(guardado);
+  // 1) validar que vengan ambas horas
+  if (req.horaInicio() == null || req.horaFin() == null) {
+    throw new IllegalArgumentException("TURNOS_HORAS_OBLIGATORIAS");
   }
+
+  // 2) crear Turno con el rango COMPLETO que manda el front
+  Turno t = new Turno();
+  t.setCliente(cliente);
+  t.setEmbarcacion(emb);
+  t.setFecha(req.fecha());
+  t.setHoraInicio(req.horaInicio());
+  t.setHoraFin(req.horaFin());   // 👈 ACÁ SE RESPETA LO DEL FRONT
+
+  // 👉 valida que fin sea posterior a inicio
+  validarHoras(t.getHoraInicio(), t.getHoraFin());
+
+  // 👉 valida solapamiento para ESA embarcación
+  verificarSolapamiento(
+      null,
+      t.getFecha(),
+      t.getHoraInicio(),
+      t.getHoraFin(),
+      t.getEmbarcacion().getIdEmbarcacion()
+  );
+
+  // 👉 valida capacidad global (2 a la vez, si lo tenés activo)
+  verificarCapacidadGlobal(t.getFecha(), t.getHoraInicio(), t.getHoraFin());
+
+  Turno guardado = turnoRepo.save(t);
+
+  // 3) crear Tarea asociada
+  Tarea tarea = new Tarea();
+  tarea.setTurno(guardado);
+  tarea.setFecha(guardado.getFecha());
+  tarea.setHora(guardado.getHoraInicio());
+  tarea.setEstado(EstadoTarea.pendiente);
+
+  // 🔹 tipo tarea desde el request ("lavado" | "botado" → enum)
+  TipoTarea tipoEnum = mapTipoTareaFromRequest(req.tipo());
+  tarea.setTipoTarea(tipoEnum);
+
+  // 🔹 número de tarea autoincremental
+  Integer nextNumero = tareaRepo.findTopByOrderByNumeroTareaDesc()
+      .map(Tarea::getNumeroTarea)
+      .map(n -> n + 1)
+      .orElse(1);
+  tarea.setNumeroTarea(nextNumero);
+
+  // 🔹 sin operario asignado por ahora
+  tarea.setOperario(null);
+
+  tareaRepo.save(tarea);
+
+  return toTurnoCliente(guardado);
+}
+
+
+private TipoTarea mapTipoTareaFromRequest(String raw) {
+  if (raw == null || raw.isBlank()) {
+    throw new IllegalArgumentException("TURNOS_TIPO_OBLIGATORIO");
+  }
+
+  switch (raw.toLowerCase()) {
+    case "lavado":
+      // 👇 usa EXACTAMENTE el nombre de la constante de tu enum
+      return TipoTarea.lavado; // o TipoTarea.LAVADO_EMBARCACION, etc.
+    case "botado":
+      return TipoTarea.botado; // o TipoTarea.BOTADO_EMBARCACION, etc.
+    default:
+      throw new IllegalArgumentException("TURNOS_TIPO_INVALIDO");
+  }
+}
+
 
   // 🔹 3) Cancelar turno (para el botón "Cancelar" del front)
   @Transactional
@@ -198,8 +228,13 @@ Turno guardado = turnoRepo.save(t);
         .orElse("pendiente"); // si no hay tarea aún, lo tomamos como pendiente
 
     String tipo = optTarea
-        .map(t -> t.getTipoTarea() != null ? t.getTipoTarea().name() : null)
-        .orElse(null);
+    .map(t -> {
+      if (t.getTipoTarea() == null) return null;
+      // lo podés mapear explícitamente o simplemente .name().toLowerCase()
+      return t.getTipoTarea().name().toLowerCase();
+    })
+    .orElse(null);
+
 
     Long idEmb = turno.getEmbarcacion() != null
         ? turno.getEmbarcacion().getIdEmbarcacion()
@@ -230,7 +265,7 @@ private static final int CAPACIDAD_POR_BLOQUE = 2;
 private void verificarCapacidadGlobal(LocalDate fecha, LocalTime inicio, LocalTime fin) {
   long ocupados = turnoRepo.countOverlapInFecha(fecha, inicio, fin);
   if (ocupados >= CAPACIDAD_POR_BLOQUE) {
-    throw new IllegalStateException("No hay cupo disponible en ese horario");
+    throw new IllegalStateException("TURNOS_CAP_GLOBAL");
   }
 }
 

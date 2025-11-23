@@ -80,8 +80,9 @@ public abstract class Usuario {
     private Boolean activo = true;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
+    @JsonIgnore // Evita la serialización de la lista de embarcaciones
     private java.util.List<UsuarioEmbarcacion> embarcaciones = new java.util.ArrayList<>();
+
 
     /**
      * Obtiene el ID único del usuario.

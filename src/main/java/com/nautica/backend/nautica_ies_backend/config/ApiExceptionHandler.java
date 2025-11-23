@@ -2,6 +2,7 @@
 package com.nautica.backend.nautica_ies_backend.config;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -92,5 +93,34 @@ public class ApiExceptionHandler {
 
     return ResponseEntity.status(status).body(body);
   }
+
+  //!HANDLER DE ERRORES PARA LA VERGA DE LOS TURNOS
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
+    public ResponseEntity<Map<String, Object>> handleTurnoErrors(RuntimeException ex,
+                                                                 HttpServletRequest req) {
+
+        String code = ex.getMessage();
+        String userMessage = switch (code) {
+            case "TURNOS_HORA_POSTERIOR" ->
+                "La hora de fin debe ser posterior a la hora de inicio.";
+            case "TURNOS_EMBARCACION_SOLAPADOS" ->
+                "Turno con la embarcación ya solicitado en ese rango horario.";
+            case "TURNOS_CAP_GLOBAL" ->
+                "No hay más cupo disponible para ese horario.";
+            default ->
+                // si viene otra IllegalState/Argument con mensaje distinto
+                code;
+        };
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", 400);
+        body.put("error", "Bad Request");
+        body.put("message", userMessage);
+        body.put("path", req.getRequestURI());
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
 
 }
