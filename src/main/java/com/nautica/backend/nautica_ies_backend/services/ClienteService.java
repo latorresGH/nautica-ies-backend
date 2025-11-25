@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente.*;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Resumen.ClienteAdminResumenDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cliente.ClientePatchRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
@@ -20,6 +21,16 @@ import com.nautica.backend.nautica_ies_backend.repository.EmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioEmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.CuotaRepository;
+
+//imports para Cliente y Embarcaciones del admin
+import com.nautica.backend.nautica_ies_backend.services.UsuarioEmbarcacionService;
+import com.nautica.backend.nautica_ies_backend.services.CuotaService;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Resumen.EmbarcacionAdminDTO;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
+import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
+import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
+
+
 /**
  * Servicio encargado de la lógica de negocio relacionada con {@link Cliente}.
  * Mantiene los métodos existentes (listar/crear/obtener/actualizar/eliminar)
@@ -34,13 +45,19 @@ public class ClienteService {
     private final EmbarcacionRepository embarcacionRepo;
     private final UsuarioEmbarcacionRepository ueRepo;
     private final CuotaRepository cuotaRepo;
+    private final UsuarioEmbarcacionService usuarioEmbarcacionService;
+    private final CuotaService cuotaService;
 
-    public ClienteService(ClienteRepository repo, UsuarioRepository usuarioRepo, EmbarcacionRepository embarcacionRepo, UsuarioEmbarcacionRepository ueRepo, CuotaRepository cuotaRepo) {
+
+    public ClienteService(ClienteRepository repo, UsuarioRepository usuarioRepo, EmbarcacionRepository embarcacionRepo, UsuarioEmbarcacionRepository ueRepo, CuotaRepository cuotaRepo,
+        UsuarioEmbarcacionService usuarioEmbarcacionService, CuotaService cuotaService) {
         this.repo = repo;
         this.usuarioRepo = usuarioRepo;
         this.embarcacionRepo = embarcacionRepo;
         this.ueRepo = ueRepo;
         this.cuotaRepo = cuotaRepo;
+        this.usuarioEmbarcacionService = usuarioEmbarcacionService;
+        this.cuotaService = cuotaService;
     }
 
     /* ===========================================================
@@ -311,4 +328,63 @@ public void bajaDefinitivaSiSinDeuda(Long id) {
     // 6) Eliminar SOLO la fila de `clientes` (desaparece de listados de clientes)
     repo.deleteRowOnlyFromClientes(id);
 }
+
+/**
+     * Listado ADMIN en formato ClienteAdminResumenDTO.
+     * 
+     */
+    public Page<ClienteAdminResumenDTO> listarAdminResumen(String buscar, Pageable pageable) {
+    Page<ClienteSummary> base = listarAdmin(buscar, pageable);
+
+    return base.map(c -> {
+        // 1) relaciones usuario-embarcación para este cliente
+        List<UsuarioEmbarcacion> relaciones = usuarioEmbarcacionService.listarPorUsuario(c.id());
+
+        // 2) mapear embarcaciones a DTO admin (id, nombre, matrícula)
+        List<EmbarcacionAdminDTO> embarcaciones = relaciones.stream()
+                .map(rel -> {
+                    Embarcacion e = rel.getEmbarcacion();
+                    return new EmbarcacionAdminDTO(
+                            e.getIdEmbarcacion(),
+                            e.getNombre(),
+                            e.getNumMatricula()
+                    );
+                })
+                .toList();
+
+        // 3) calcular si tiene deuda en alguna embarcación
+        boolean conDeuda = false;
+
+        for (EmbarcacionAdminDTO eDto : embarcaciones) {
+            CuotaResumen cuota = cuotaService.cuotaActualPorClienteYEmbarcacion(
+                    c.id(),
+                    eDto.id()
+            );
+
+            if (cuota != null && !"PAGADA".equalsIgnoreCase(cuota.estado())) {
+                conDeuda = true;
+                break;
+            }
+        }
+
+        String estadoCuotas = conDeuda ? "CON_DEUDA" : "AL_DIA";
+
+        // Buscar el usuario para leer el estado real de la tabla usuarios
+        boolean activoUsuario = usuarioRepo.findById(c.id())
+                .map(u -> Boolean.TRUE.equals(u.getActivo()))
+                .orElse(false);
+
+        return new ClienteAdminResumenDTO(
+                c.id(),
+                c.nombre(),
+                c.apellido(),
+                c.telefono(),
+                activoUsuario,
+                embarcaciones,
+                estadoCuotas
+        );
+
+    });
+}
+
 }
