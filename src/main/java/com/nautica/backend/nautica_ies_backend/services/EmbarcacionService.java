@@ -2,6 +2,7 @@
 package com.nautica.backend.nautica_ies_backend.services;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,6 +19,7 @@ import com.nautica.backend.nautica_ies_backend.models.enums.RolEnEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.repository.EmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioEmbarcacionRepository;
 import com.nautica.backend.nautica_ies_backend.repository.UsuarioRepository;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.EmbarcacionResumenDTO;
 
 @Service
 public class EmbarcacionService {
@@ -126,16 +128,24 @@ public class EmbarcacionService {
         return ueRepo.findByEmbarcacion_IdEmbarcacion(idEmbarcacion);
     }
 
-    public List<EmbarcacionResumenDTO> listarPorUsuario(Long usuarioId) {
+public List<EmbarcacionResumenDTO> listarPorUsuario(Long usuarioId) {
     var relaciones = ueRepo.findActivasByUsuario(usuarioId);
     return relaciones.stream()
         .map(UsuarioEmbarcacion::getEmbarcacion)
         .distinct()
         .map(e -> new EmbarcacionResumenDTO(
-            e.getIdEmbarcacion(),
-            e.getNombre(),
-            e.getNumMatricula()
+            e.getIdEmbarcacion(),       // Long id
+            e.getNombre(),              // String nombre
+            e.getNumMatricula(),        // String matricula
+            e.getMarcaCasco(),          // String marcaCasco
+            e.getModeloCasco(),         // String modeloCasco
+            e.getMarcaMotor(),          // String marcaMotor
+            e.getModeloMotor(),         // String modeloMotor
+            e.getPotenciaMotor(),       // Integer potenciaMotor
+            e.getFechaAlta()            // LocalDate fechaAlta
         ))
         .toList();
-    }
+}
+
+
 }

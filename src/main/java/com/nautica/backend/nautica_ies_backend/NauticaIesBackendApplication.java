@@ -2,6 +2,7 @@ package com.nautica.backend.nautica_ies_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Clase principal del proyecto <strong>Náutica IES Backend</strong>.
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Esta clase lanza el contexto de Spring y ejecuta la aplicación.
  */
 @SpringBootApplication
+@EnableScheduling 
 public class NauticaIesBackendApplication {
 
      /**

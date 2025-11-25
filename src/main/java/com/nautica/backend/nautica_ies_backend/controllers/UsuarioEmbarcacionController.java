@@ -3,6 +3,7 @@ package com.nautica.backend.nautica_ies_backend.controllers;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nautica.backend.nautica_ies_backend.controllers.dto.EmbarcacionResumenDTO;
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolEnEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioEmbarcacionService;
@@ -48,11 +50,31 @@ public class UsuarioEmbarcacionController {
         return ResponseEntity.ok(service.listarPorUsuario(usuarioId));
     }
 
-    // Listar por embarcación
-    @GetMapping("/by-embarcacion")
-    public ResponseEntity<List<UsuarioEmbarcacion>> porEmbarcacion(@RequestParam Long embarcacionId) {
-        return ResponseEntity.ok(service.listarPorEmbarcacion(embarcacionId));
-    }
+@GetMapping("/by-embarcacion")
+public ResponseEntity<List<EmbarcacionResumenDTO>> porEmbarcacion(@RequestParam Long embarcacionId) {
+    // Obtener la lista de relaciones entre usuario y embarcación (según tu lógica)
+    List<UsuarioEmbarcacion> relaciones = service.listarPorEmbarcacion(embarcacionId);
+
+    // Mapear las embarcaciones asociadas a UsuarioEmbarcacion a EmbarcacionResumenDTO
+    List<EmbarcacionResumenDTO> embarcacionesDTO = relaciones.stream()
+        .map(UsuarioEmbarcacion::getEmbarcacion) // Obtener la embarcación asociada a cada relación
+        .distinct() // Eliminar embarcaciones duplicadas si es necesario
+        .map(e -> new EmbarcacionResumenDTO(
+            e.getIdEmbarcacion(),
+            e.getNombre(),
+            e.getNumMatricula(),
+            e.getMarcaCasco(),
+            e.getModeloCasco(),
+            e.getMarcaMotor(),
+            e.getModeloMotor(),
+            e.getPotenciaMotor(),
+            e.getFechaAlta()
+        ))
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok(embarcacionesDTO);
+}
+
 
     // Crear (sin DTOs): recibe todo por query params
     // Ej: POST

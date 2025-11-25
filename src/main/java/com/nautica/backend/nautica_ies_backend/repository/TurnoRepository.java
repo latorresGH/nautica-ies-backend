@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.nautica.backend.nautica_ies_backend.models.Turno;
+import com.nautica.backend.nautica_ies_backend.models.Usuario;
 
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
 

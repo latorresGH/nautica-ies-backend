@@ -1,8 +1,8 @@
-// src/main/java/com/nautica/backend/nautica_ies_backend/controllers/UsuarioController.java
 package com.nautica.backend.nautica_ies_backend.controllers;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.UsuarioCreateRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
@@ -22,14 +23,21 @@ import com.nautica.backend.nautica_ies_backend.models.Administrador;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
 
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Usuario.UsuarioBasico;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Usuario.UsuarioCorreo;
 
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCliente;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolUsuario;
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoAdministrador;
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
+import com.nautica.backend.nautica_ies_backend.services.ClienteService;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
+import com.nautica.backend.nautica_ies_backend.repository.OperarioRepository;
+import com.nautica.backend.nautica_ies_backend.repository.ClienteRepository;
+import com.nautica.backend.nautica_ies_backend.repository.AdministradorRepository;
 
 import jakarta.validation.Valid;
+
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,14 +51,17 @@ import java.util.Map;
 public class UsuarioController {
 
     private final UsuarioService service;
+        private final ClienteService clienteService;  // Usamos ClienteService porque estás buscando el usuario por correo
+
 
     /**
      * Constructor que inyecta el servicio de usuarios.
      *
      * @param service Servicio encargado de la lógica de negocio para usuarios.
      */
-    public UsuarioController(UsuarioService service) {
+    public UsuarioController(UsuarioService service, ClienteService clienteService) {
         this.service = service;
+        this.clienteService = clienteService;
     }
 
     /**
@@ -87,17 +98,55 @@ public class UsuarioController {
     }
 
     /**
-     * Busca un usuario por su correo electrónico.
-     * <p>
-     * Endpoint: {@code GET /api/usuarios/by-correo?correo=ejemplo@correo.com}
-     *
-     * @param correo Correo del usuario.
-     * @return Usuario encontrado.
+     * Endpoint para obtener un usuario por su correo
+     * @param correo Correo del usuario
+     * @return Usuario encontrado o error
      */
     @GetMapping("/by-correo")
-    public ResponseEntity<Usuario> porCorreo(@RequestParam String correo) {
-        return ResponseEntity.ok(service.buscarPorCorreo(correo));
+    public ResponseEntity<UsuarioCorreo> porCorreo(@RequestParam String correo) {
+        try {
+            // Llamada al servicio para buscar el usuario por correo
+            Usuario usuario = clienteService.buscarPorCorreo(correo);
+
+            // Mapear el usuario encontrado a UsuarioCorreo
+            UsuarioCorreo usuarioCorreo = new UsuarioCorreo();
+            usuarioCorreo.setIdUsuario(usuario.getIdUsuario());
+            usuarioCorreo.setNombre(usuario.getNombre());
+            usuarioCorreo.setApellido(usuario.getApellido());
+            usuarioCorreo.setCorreo(usuario.getCorreo());
+            usuarioCorreo.setTelefono(usuario.getTelefono());
+            usuarioCorreo.setDireccion(usuario.getDireccion());
+            usuarioCorreo.setLocalidad(usuario.getLocalidad());
+            usuarioCorreo.setProvincia(usuario.getProvincia());
+            usuarioCorreo.setDni(usuario.getDni());
+            usuarioCorreo.setRol(usuario.getRol().toString());
+
+            // Devuelve el usuario encontrado con un código de respuesta 200 OK
+            return ResponseEntity.ok(usuarioCorreo);
+        } catch (ResourceNotFoundException e) {
+            // Si el usuario no se encuentra, devolver 404 Not Found
+            return ResponseEntity.status(404).body(null);
+        } catch (Exception e) {
+            // Cualquier otro error, devolver 500 Internal Server Error
+            return ResponseEntity.status(500).body(null);
+        }
     }
+
+@GetMapping("/ids-por-correo")
+public ResponseEntity<Map<String, Object>> obtenerIdsPorCorreo(@RequestParam String correo) {
+    // Utilizamos el ClienteService o UsuarioService para buscar el usuario
+    Usuario usuario = clienteService.buscarPorCorreo(correo); // Llamamos al método de búsqueda en el servicio
+
+    // Mapear la respuesta con los IDs
+    Map<String, Object> response = new HashMap<>();
+    response.put("idUsuario", usuario.getIdUsuario());
+    // Aquí puedes agregar más información si necesitas
+
+    return ResponseEntity.ok(response);  // Devolvemos el ID del usuario
+}
+
+
+
 
     /**
      * Crea un nuevo usuario.
@@ -211,12 +260,12 @@ public class UsuarioController {
         return ResponseEntity.noContent().build(); // 204
     }
 
-    /** GET /api/usuarios/ids-por-correo?correo=cliente@nautica.com */
-    @GetMapping("/ids-por-correo")
-    public ResponseEntity<Map<String, Object>> idsPorCorreo(@RequestParam String correo) {
-        return ResponseEntity.ok(service.idsPorCorreo(correo));
-    }
-
+    /**
+     * Actualiza el teléfono de un usuario.
+     *
+     * @param id       ID del usuario.
+     * @param telefono Nuevo teléfono.
+     */
     @PutMapping("/{id}/telefono")
     public ResponseEntity<Usuario> actualizarTelefono(
             @PathVariable Long id,

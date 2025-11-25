@@ -20,13 +20,12 @@ public class UsuarioEmbarcacion {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)
-    @JsonIgnoreProperties({ "embaracaciones" }) // evita recursión; ajusta al nombre real del campo
-
+    @JsonIgnoreProperties({ "embaracaciones" }) // Evita la recursión
     private Usuario usuario;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_embarcacion", nullable = false)
-    @JsonIgnoreProperties({ "usuarios" }) // evita recursión
+    @JsonIgnoreProperties({ "usuarios" }) // Evita la recursión
     private Embarcacion embarcacion;
 
     @Enumerated(EnumType.STRING)

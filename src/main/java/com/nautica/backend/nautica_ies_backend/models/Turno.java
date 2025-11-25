@@ -48,8 +48,8 @@ public class Turno {
   @JoinColumn(name = "id_embarcacion", nullable = false)
   private Embarcacion embarcacion;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "id_operario", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "id_operario", nullable = true)
   private Operario operario;
 
   // getters/setters

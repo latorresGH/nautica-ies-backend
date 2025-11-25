@@ -2,6 +2,7 @@ package com.nautica.backend.nautica_ies_backend.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
@@ -17,6 +18,11 @@ import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.Cuota
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoCreateRequest;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoSummary;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoDetail;
+import com.nautica.backend.nautica_ies_backend.models.enums.RolEnEmbarcacion;
+
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.DetalleCuotaEmbarcacion;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
+
 
 @Service
 public class CuotaService {
@@ -24,11 +30,16 @@ public class CuotaService {
     private final CuotaRepository repo;
     private final ClienteRepository clienteRepo;
     private final EmbarcacionRepository embarcacionRepo;
+    private final TarifaCamaRepository tarifaRepo;
+    private final UsuarioEmbarcacionRepository usuarioEmbRepo;
 
-    public CuotaService(CuotaRepository repo, ClienteRepository clienteRepo, EmbarcacionRepository embarcacionRepo) {
+    public CuotaService(CuotaRepository repo, ClienteRepository clienteRepo, EmbarcacionRepository embarcacionRepo,
+            TarifaCamaRepository tarifaRepo, UsuarioEmbarcacionRepository usuarioEmbRepo) {
         this.repo = repo;
         this.clienteRepo = clienteRepo;
         this.embarcacionRepo = embarcacionRepo;
+        this.tarifaRepo = tarifaRepo;
+        this.usuarioEmbRepo = usuarioEmbRepo;
     }
 
     public Page<Cuota> listar(int page, int size, Sort sort) {
@@ -40,56 +51,66 @@ public class CuotaService {
     }
 
     @Transactional
-    public Cuota crear(Cuota c) {
-        // normalizamos numeroMes al día 1
-        LocalDate mes = c.getNumeroMes().withDayOfMonth(1);
-        c.setNumeroMes(mes);
+public Cuota crear(Cuota c) {
+    // normalizamos numeroMes al día 1
+    LocalDate mes = c.getNumeroMes().withDayOfMonth(1);
+    c.setNumeroMes(mes);
 
-        Cliente cliente = clienteRepo.findById(c.getCliente().getIdUsuario())
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente no existe"));
-        Embarcacion emb = embarcacionRepo.findById(c.getEmbarcacion().getIdEmbarcacion())
-                .orElseThrow(() -> new ResourceNotFoundException("Embarcación no existe"));
+    // 👇 NUEVO
+    String periodo = String.format("%d-%02d", mes.getYear(), mes.getMonthValue());
+    c.setPeriodo(periodo);
 
-        if (repo.existsByClienteAndEmbarcacionAndNumeroMes(cliente, emb, mes)) {
-            throw new IllegalArgumentException("Ya existe una cuota para ese cliente/embarcación/mes");
-        }
+    Cliente cliente = clienteRepo.findById(c.getCliente().getIdUsuario())
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no existe"));
+    Embarcacion emb = embarcacionRepo.findById(c.getEmbarcacion().getIdEmbarcacion())
+            .orElseThrow(() -> new ResourceNotFoundException("Embarcación no existe"));
 
-        // numero_pago correlativo
-        int next = repo.findTopByClienteAndEmbarcacionOrderByNumeroPagoDesc(cliente, emb)
-                .map(x -> x.getNumeroPago() + 1)
-                .orElse(1);
-        c.setNumeroPago(next);
-
-        c.setCliente(cliente);
-        c.setEmbarcacion(emb);
-
-        if (c.getEstadoCuota() == null)
-            c.setEstadoCuota(EstadoCuota.pendiente);
-        if (c.getMonto() == null || c.getMonto().compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Monto inválido");
-
-        try {
-            return repo.save(c);
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Violación de restricciones al crear la cuota");
-        }
+    if (repo.existsByClienteAndEmbarcacionAndNumeroMes(cliente, emb, mes)) {
+        throw new IllegalArgumentException("Ya existe una cuota para ese cliente/embarcación/mes");
     }
 
-    @Transactional
-    public Cuota actualizar(Long id, Cuota datos) {
-        Cuota c = obtener(id);
+    int next = repo.findTopByClienteAndEmbarcacionOrderByNumeroPagoDesc(cliente, emb)
+            .map(x -> x.getNumeroPago() + 1)
+            .orElse(1);
+    c.setNumeroPago(next);
 
-        if (datos.getNumeroMes() != null) {
-            c.setNumeroMes(datos.getNumeroMes().withDayOfMonth(1));
-        }
-        if (datos.getMonto() != null)
-            c.setMonto(datos.getMonto());
-        if (datos.getFechaPago() != null)
-            c.setFechaPago(datos.getFechaPago());
-        if (datos.getEstadoCuota() != null)
-            c.setEstadoCuota(datos.getEstadoCuota());
-        if (datos.getFormaPago() != null)
-            c.setFormaPago(datos.getFormaPago());
+    c.setCliente(cliente);
+    c.setEmbarcacion(emb);
+
+    if (c.getEstadoCuota() == null)
+        c.setEstadoCuota(EstadoCuota.pendiente);
+    if (c.getMonto() == null || c.getMonto().compareTo(BigDecimal.ZERO) <= 0)
+        throw new IllegalArgumentException("Monto inválido");
+
+    try {
+        return repo.save(c);
+    } catch (DataIntegrityViolationException e) {
+        throw new IllegalArgumentException("Violación de restricciones al crear la cuota");
+    }
+}
+
+
+    @Transactional
+public Cuota actualizar(Long id, Cuota datos) {
+    Cuota c = obtener(id);
+
+    if (datos.getNumeroMes() != null) {
+        LocalDate mesNormalizado = datos.getNumeroMes().withDayOfMonth(1);
+        c.setNumeroMes(mesNormalizado);
+
+        // 👇 NUEVO: mantener periodo consistente
+        String periodo = String.format("%d-%02d", mesNormalizado.getYear(), mesNormalizado.getMonthValue());
+        c.setPeriodo(periodo);
+    }
+
+    if (datos.getMonto() != null)
+        c.setMonto(datos.getMonto());
+    if (datos.getFechaPago() != null)
+        c.setFechaPago(datos.getFechaPago());
+    if (datos.getEstadoCuota() != null)
+        c.setEstadoCuota(datos.getEstadoCuota());
+    if (datos.getFormaPago() != null)
+        c.setFormaPago(datos.getFormaPago());
 
         // (opcional) cambio de cliente/embarcación: validar y actualizar
         if (datos.getCliente() != null && datos.getCliente().getIdUsuario() != null) {
@@ -238,4 +259,152 @@ public class CuotaService {
                 c.getFormaPago() == null ? null : c.getFormaPago().name(),
                 c.getEstadoCuota() == null ? null : c.getEstadoCuota().name());
     }
+
+    @Transactional(readOnly = true)
+    public List<CuotaResumen> listarCuotasCliente(Long clienteId) {
+        return repo.findByCliente_IdUsuarioOrderByNumeroMesDesc(clienteId)
+                .stream()
+                .map(c -> new CuotaResumen(
+                        c.getNumeroMes(),
+                        c.getMonto(),
+                        c.getEstadoCuota().name() // "pendiente", "pagada", "vencida"
+                ))
+                .toList();
+    }
+
+    // resumen simple de deuda para el cliente
+    @Transactional(readOnly = true)
+    public DeudaCliente resumenDeudaCliente(Long clienteId) {
+        var cuotas = repo.findByCliente_IdUsuarioOrderByNumeroMesDesc(clienteId);
+
+        long cuotasImpagas = cuotas.stream()
+                .filter(c -> c.getEstadoCuota() != EstadoCuota.pagada)
+                .count();
+
+        BigDecimal totalImpago = cuotas.stream()
+                .filter(c -> c.getEstadoCuota() != EstadoCuota.pagada)
+                .map(Cuota::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new DeudaCliente(cuotasImpagas, totalImpago);
+    }
+
+    // Podés meter esto como record estático o clase simple
+    public static record DeudaCliente(long cuotasImpagas, BigDecimal totalImpago) {
+    }
+
+    // Ejemplo: obtener precio para una embarcación en un mes
+    private BigDecimal obtenerPrecioMesParaEmbarcacion(Embarcacion emb, LocalDate mes) {
+        if (emb.getTipoCama() == null) {
+            throw new IllegalArgumentException("La embarcación " + emb.getIdEmbarcacion()
+                    + " no tiene tipo de cama asignado");
+        }
+
+        LocalDate mesNormalizado = mes.withDayOfMonth(1);
+
+        TarifaCama tarifa = tarifaRepo.findByTipoCamaAndNumeroMes(emb.getTipoCama(), mesNormalizado)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No hay tarifa definida para tipo de cama " + emb.getTipoCama()
+                                + " en el mes " + mesNormalizado));
+
+        return tarifa.getPrecio();
+    }
+
+    /**
+     * Genera cuotas para TODAS las embarcaciones cuyo usuario sea PROPIETARIO
+     * en el mes dado.
+     *
+     * - mesParam: cualquier día del mes -> se normaliza al día 1
+     * - No pisa cuotas existentes (cliente + embarcación + numeroMes únicos)
+     * - Usa obtenerPrecioMesParaEmbarcacion(...)
+     * - Devuelve cuántas cuotas nuevas creó
+     */
+    @Transactional
+    public int generarCuotasMes(LocalDate mesParam) {
+        LocalDate mes = mesParam.withDayOfMonth(1); // normalizamos al 1
+
+        // Todas las relaciones propietario-embarcación activas
+        var relaciones = usuarioEmbRepo.findByRolEnEmbarcacionAndHastaIsNull(RolEnEmbarcacion.propietario);
+
+        int creadas = 0;
+
+        for (UsuarioEmbarcacion ue : relaciones) {
+            var usuario = ue.getUsuario();
+            var embarcacion = ue.getEmbarcacion();
+
+            if (usuario == null || embarcacion == null) {
+                continue;
+            }
+
+            // Buscamos el "Cliente" que corresponde al usuario
+            // (asumiendo que Cliente.id = Usuario.id)
+            Long clienteId = usuario.getIdUsuario();
+            Cliente cliente = clienteRepo.findById(clienteId)
+                    .orElse(null);
+
+            if (cliente == null) {
+                // si no hay cliente, no generamos cuota
+                continue;
+            }
+
+            // Si ya existe una cuota para este cliente + embarcación + mes -> skip
+            if (repo.existsByClienteAndEmbarcacionAndNumeroMes(cliente, embarcacion, mes)) {
+                continue;
+            }
+
+            // Obtengo el precio según tipo de cama y mes
+            BigDecimal precio = obtenerPrecioMesParaEmbarcacion(embarcacion, mes);
+
+            // Numero de pago correlativo para ese cliente+embarcación
+            int nextNumero = repo.findTopByClienteAndEmbarcacionOrderByNumeroPagoDesc(cliente, embarcacion)
+                    .map(c -> c.getNumeroPago() + 1)
+                    .orElse(1);
+
+            String periodo = String.format("%d-%02d", mes.getYear(), mes.getMonthValue());
+
+            Cuota cuota = new Cuota();
+            cuota.setCliente(cliente);
+            cuota.setEmbarcacion(embarcacion);
+            cuota.setNumeroMes(mes);
+            cuota.setPeriodo(periodo);
+            cuota.setNumeroPago(nextNumero);
+            cuota.setMonto(precio);
+            cuota.setEstadoCuota(EstadoCuota.pendiente);
+            cuota.setFechaPago(null);
+            cuota.setFormaPago(null); // se setea cuando efectivamente se paga
+
+            repo.save(cuota);
+            creadas++;
+        }
+
+        return creadas;
+    }
+
+    @Transactional(readOnly = true)
+public ResumenCuotaMesCliente resumenCuotaMesCliente(Long clienteId, LocalDate mesParam) {
+    LocalDate mes = mesParam.withDayOfMonth(1);
+
+    var cuotasMes = repo.findByCliente_IdUsuarioAndNumeroMes(clienteId, mes);
+    if (cuotasMes.isEmpty()) {
+        return null;
+    }
+
+    var total = cuotasMes.stream()
+            .map(Cuota::getMonto)
+            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+    String periodo = cuotasMes.get(0).getPeriodo(); // todas comparten el mismo
+
+    var detalles = cuotasMes.stream()
+            .map(c -> new DetalleCuotaEmbarcacion(
+                    c.getEmbarcacion().getIdEmbarcacion(),
+                    c.getEmbarcacion().getNombre(),
+                    c.getEmbarcacion().getTipoCama(),
+                    c.getMonto()
+            ))
+            .toList();
+
+    return new ResumenCuotaMesCliente(mes, periodo, total, detalles);
+}
+
 }

@@ -9,12 +9,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional; // Asegúrate de importar esto
+import org.springframework.stereotype.Repository;
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente.*;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Resumen.ClienteAdminResumenDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cliente.ClientePatchRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
+import com.nautica.backend.nautica_ies_backend.models.Usuario;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
 import com.nautica.backend.nautica_ies_backend.repository.ClienteRepository;
 import com.nautica.backend.nautica_ies_backend.repository.EmbarcacionRepository;
@@ -278,6 +283,19 @@ private ClienteSummary toSummary(Cliente c) {
         }
         
     }
+
+      /**
+     * Método para buscar el usuario por correo
+     */
+    public Usuario buscarPorCorreo(String correo) {
+        // Usar Optional para obtener el usuario
+        Optional<Usuario> usuarioOpt = usuarioRepo.findByCorreo(correo);
+
+        // Si el usuario está presente, lo devolvemos, si no, lanzamos una excepción
+        return usuarioOpt.orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado para el correo: " + correo));
+    }
+
+
 
     /**
  * Baja definitiva del CLIENTE (elimina fila en `clientes`),

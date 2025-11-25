@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
+import com.nautica.backend.nautica_ies_backend.models.enums.RolEnEmbarcacion;
 
 public interface UsuarioEmbarcacionRepository extends JpaRepository<UsuarioEmbarcacion, Long> {
     List<UsuarioEmbarcacion> findByEmbarcacion_IdEmbarcacion(Long idEmbarcacion);
@@ -28,4 +29,6 @@ public interface UsuarioEmbarcacionRepository extends JpaRepository<UsuarioEmbar
     void deleteByUsuario_IdUsuario(Long idUsuario);
 
     long countByEmbarcacion_IdEmbarcacion(Long idEmbarcacion);
+
+    List<UsuarioEmbarcacion> findByRolEnEmbarcacionAndHastaIsNull(RolEnEmbarcacion rolEnEmbarcacion);
 }

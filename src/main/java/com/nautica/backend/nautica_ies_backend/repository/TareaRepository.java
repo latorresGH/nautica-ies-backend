@@ -30,4 +30,5 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     // 🔹 NUEVO: tareas en un rango de fechas con un estado
     List<Tarea> findByFechaBetweenAndEstado(LocalDate desde, LocalDate hasta, EstadoTarea estado);
     Optional<Tarea> findByTurno_Id(Long id);
+    Optional<Tarea> findTopByOrderByNumeroTareaDesc();
 }

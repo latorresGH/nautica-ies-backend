@@ -29,6 +29,7 @@ public interface CuotaRepository extends JpaRepository<Cuota, Long> {
 
   List<Cuota> findByEmbarcacion_IdEmbarcacionAndNumeroMesBetween(Long idEmbarcacion, LocalDate desde, LocalDate hasta);
 
+  List<Cuota> findByCliente_IdUsuarioOrderByNumeroMesDesc(Long clienteId);
   long countByCliente_IdUsuarioAndEstadoCuotaIn(Long idUsuario, java.util.Collection<EstadoCuota> estados);
 
   @org.springframework.data.jpa.repository.Modifying
@@ -84,5 +85,9 @@ public interface CuotaRepository extends JpaRepository<Cuota, Long> {
       @Param("hasta") java.time.LocalDate hasta,
       @Param("medio") com.nautica.backend.nautica_ies_backend.models.enums.FormaPago medio,
       Pageable pageable);
+
+        boolean existsByNumeroMes(LocalDate numeroMes);
+            
+List<Cuota> findByCliente_IdUsuarioAndNumeroMes(Long clienteId, LocalDate numeroMes);
 
 }
