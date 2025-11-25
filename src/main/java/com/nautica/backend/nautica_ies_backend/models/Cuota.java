@@ -57,6 +57,18 @@ public class Cuota {
     @Column(name = "estado_cuota", nullable = false)
     private EstadoCuota estadoCuota; // PENDIENTE/PAGADA/VENCIDA
 
+    @Column(nullable = false)
+    private String periodo;
+
+
+    public void setPeriodo(String periodo) {
+        this.periodo = periodo;
+    }
+
+    public String getPeriodo() {
+        return periodo;
+    }
+
     // Getters & setters
     public Long getIdCuota() {
         return idCuota;

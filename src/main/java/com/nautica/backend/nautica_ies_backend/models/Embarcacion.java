@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.nautica.backend.nautica_ies_backend.models.enums.TipoCama;
 
 import jakarta.persistence.*;
 
@@ -52,6 +53,10 @@ public class Embarcacion {
 
   @Column(name = "fecha_baja")
   private LocalDate fechaBaja;
+  
+  @Column(name = "tipo_cama")
+@Enumerated(EnumType.STRING)
+private TipoCama tipoCama;
 
   /**
    * Asociación N:M con Usuario a través de la entidad puente.
@@ -60,6 +65,13 @@ public class Embarcacion {
   private List<UsuarioEmbarcacion> usuarios = new ArrayList<>();
 
   // --- getters/setters ---
+  public TipoCama getTipoCama() {
+    return tipoCama;
+  }
+
+  public void getTipoCama(TipoCama tipoCama) {
+    this.tipoCama = tipoCama;
+  }
 
   public Long getIdEmbarcacion() {
     return idEmbarcacion;

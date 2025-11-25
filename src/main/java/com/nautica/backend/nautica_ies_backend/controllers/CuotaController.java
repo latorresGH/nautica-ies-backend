@@ -1,5 +1,8 @@
 package com.nautica.backend.nautica_ies_backend.controllers;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +12,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
 import com.nautica.backend.nautica_ies_backend.models.Cuota;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService;
+import com.nautica.backend.nautica_ies_backend.services.CuotaService.DeudaCliente;
+
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
 
 import jakarta.validation.Valid;
 
@@ -72,4 +78,33 @@ public ResponseEntity<CuotaResumen> cuotaActual(@RequestParam Long clienteId,
         ? ResponseEntity.noContent().build() // 204 sin body y sin Content-Type
         : ResponseEntity.ok(dto);  
 }
+
+    // ✅ NUEVO: historial de cuotas del cliente (solo lectura para el cliente)
+    // GET /api/cuotas/by-cliente?clienteId=2
+    @GetMapping("/by-cliente")
+    public ResponseEntity<List<CuotaResumen>> cuotasPorCliente(@RequestParam Long clienteId) {
+        return ResponseEntity.ok(service.listarCuotasCliente(clienteId));
+    }
+
+    // ✅ NUEVO: resumen de deuda para mostrar en el front
+    // GET /api/cuotas/by-cliente/deuda?clienteId=2
+    @GetMapping("/by-cliente/deuda")
+    public ResponseEntity<DeudaCliente> deudaCliente(@RequestParam Long clienteId) {
+        return ResponseEntity.ok(service.resumenDeudaCliente(clienteId));
+    }
+
+    // GET /api/cuotas/by-cliente/mes-actual-resumen?clienteId=2
+@GetMapping("/by-cliente/mes-actual-resumen")
+public ResponseEntity<ResumenCuotaMesCliente> resumenMesActualCliente(
+        @RequestParam Long clienteId) {
+
+    LocalDate hoy = LocalDate.now();
+    var dto = service.resumenCuotaMesCliente(clienteId, hoy);
+
+    if (dto == null) {
+        return ResponseEntity.noContent().build();
+    }
+    return ResponseEntity.ok(dto);
+}
+
 }
