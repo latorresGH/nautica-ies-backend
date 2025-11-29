@@ -168,4 +168,14 @@ public class ClienteController {
         var pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(service.listarAdminResumen(buscar, pageable));
     }
+
+    @GetMapping("/admin/{id}/info")
+        public ResponseEntity<ClienteInfoAdminDTO> infoAdmin(@PathVariable Long id) {
+        ClienteInfoAdminDTO dto = service.obtenerInfoAdmin(id);
+    return ResponseEntity.ok(dto);
+}
+
+
+
+
 }

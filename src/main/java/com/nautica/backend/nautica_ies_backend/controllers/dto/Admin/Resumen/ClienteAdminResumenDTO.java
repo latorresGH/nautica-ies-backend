@@ -11,3 +11,4 @@ public record ClienteAdminResumenDTO(
         List<EmbarcacionAdminDTO> embarcaciones,
         String estadoCuotas                 // "AL_DIA" | "CON_DEUDA"
 ) {}
+
