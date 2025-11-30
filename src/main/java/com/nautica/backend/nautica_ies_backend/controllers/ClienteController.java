@@ -15,6 +15,9 @@ import com.nautica.backend.nautica_ies_backend.services.ClienteService;
 
 import jakarta.validation.Valid;
 
+//import para poder llevar los datos reunidos para ventana de cliente y embarcaciones
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Resumen.ClienteAdminResumenDTO;
+
 /**
  * Controlador REST para la gestión de clientes.
  * 
@@ -150,4 +153,29 @@ public class ClienteController {
     public ResponseEntity<ClienteDetail> bajaAdmin(@PathVariable Long id) {
         return ResponseEntity.ok(service.bajaAdmin(id));
     }
+
+    /**
+     * Listado ADMIN de clientes en formato resumen extendido.
+     * Por ahora devuelve sólo datos básicos (sin embarcaciones ni estado de cuotas real).
+     * Ej: GET /api/clientes/admin/resumen?buscar=juan&page=0&size=20
+     */
+    @GetMapping("/admin/resumen")
+    public ResponseEntity<Page<ClienteAdminResumenDTO>> listarAdminResumen(
+            @RequestParam(required = false, name = "buscar", defaultValue = "") String buscar,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        var pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(service.listarAdminResumen(buscar, pageable));
+    }
+
+    @GetMapping("/admin/{id}/info")
+        public ResponseEntity<ClienteInfoAdminDTO> infoAdmin(@PathVariable Long id) {
+        ClienteInfoAdminDTO dto = service.obtenerInfoAdmin(id);
+    return ResponseEntity.ok(dto);
+}
+
+
+
+
 }

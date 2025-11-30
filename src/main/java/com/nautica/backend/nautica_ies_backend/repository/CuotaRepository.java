@@ -87,7 +87,19 @@ public interface CuotaRepository extends JpaRepository<Cuota, Long> {
       Pageable pageable);
 
         boolean existsByNumeroMes(LocalDate numeroMes);
-            
+   //sumar monto de cuotas
+  @Query("""
+    SELECT COALESCE(SUM(c.monto),0)
+    FROM Cuota c
+    WHERE c.cliente.idUsuario = :idCliente
+      AND c.estadoCuota IN :estados
+""")
+BigDecimal sumDeudaPorClienteYEstados(
+        @Param("idCliente") Long idCliente,
+        @Param("estados") List<EstadoCuota> estados
+);
+
+
 List<Cuota> findByCliente_IdUsuarioAndNumeroMes(Long clienteId, LocalDate numeroMes);
 
 }

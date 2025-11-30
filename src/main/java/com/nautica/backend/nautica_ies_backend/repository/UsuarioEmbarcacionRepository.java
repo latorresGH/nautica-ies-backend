@@ -6,12 +6,13 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.models.enums.RolEnEmbarcacion;
 
 public interface UsuarioEmbarcacionRepository extends JpaRepository<UsuarioEmbarcacion, Long> {
     List<UsuarioEmbarcacion> findByEmbarcacion_IdEmbarcacion(Long idEmbarcacion);
-
+    
     java.util.List<UsuarioEmbarcacion> findByUsuario_IdUsuario(Long idUsuario);
 
     Optional<UsuarioEmbarcacion> findByUsuario_IdUsuarioAndEmbarcacion_IdEmbarcacion(Long idUsuario,
@@ -31,4 +32,11 @@ public interface UsuarioEmbarcacionRepository extends JpaRepository<UsuarioEmbar
     long countByEmbarcacion_IdEmbarcacion(Long idEmbarcacion);
 
     List<UsuarioEmbarcacion> findByRolEnEmbarcacionAndHastaIsNull(RolEnEmbarcacion rolEnEmbarcacion);
+
+    //metodo para buscar autorizados
+    List<UsuarioEmbarcacion> findByEmbarcacionInAndRolEnEmbarcacion(
+        List<Embarcacion> embarcaciones,
+        RolEnEmbarcacion rolEnEmbarcacion
+);
+
 }

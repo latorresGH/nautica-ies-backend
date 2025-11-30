@@ -21,7 +21,7 @@ public class Embarcacion {
   @Column(name = "id_embarcacion")
   private Long idEmbarcacion;
 
-  @Column(name = "num_matricula", length = 30)
+  @Column(name = "matricula", length = 30)
   private String numMatricula;
 
   @Column(name = "nombre", length = 50, nullable = false)
@@ -69,7 +69,7 @@ private TipoCama tipoCama;
     return tipoCama;
   }
 
-  public void getTipoCama(TipoCama tipoCama) {
+  public void setTipoCama(TipoCama tipoCama) {
     this.tipoCama = tipoCama;
   }
 
