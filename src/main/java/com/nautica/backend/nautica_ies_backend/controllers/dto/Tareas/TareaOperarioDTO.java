@@ -12,6 +12,7 @@ public record TareaOperarioDTO(
         String fecha,           // "2025-11-25" o lo que quieras
         String hora,            // "10:30"
         String notaOperario,     // puede ser null
-        String matricula,
-        String marca
+        String marca,
+        String matricula
+
 ) {}

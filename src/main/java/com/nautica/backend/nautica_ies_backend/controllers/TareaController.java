@@ -245,8 +245,9 @@ public class TareaController {
                 fecha,
                 hora,
                 t.getNotaOperario(),
-                matricula,
-                marca
+                marca,
+                matricula
+                
         );
 
     }
