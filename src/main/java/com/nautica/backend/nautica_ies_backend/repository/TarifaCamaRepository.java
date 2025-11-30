@@ -14,7 +14,12 @@ public interface TarifaCamaRepository extends JpaRepository<TarifaCama, Long> {
 
     // 👉 tu método:
     Optional<TarifaCama> findByTipoCamaAndNumeroMes(TipoCama tipoCama, LocalDate numeroMes);
+
     // todas las tarifas disponibles para un mes
     List<TarifaCama> findByNumeroMes(LocalDate numeroMes);
+
+    Optional<TarifaCama> findTopByTipoCamaAndNumeroMesLessThanEqualOrderByNumeroMesDesc(
+            TipoCama tipoCama,
+            LocalDate numeroMes);
 
 }

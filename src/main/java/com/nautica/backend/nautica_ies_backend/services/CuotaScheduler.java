@@ -32,7 +32,7 @@ public class CuotaScheduler {
      * - Si ya existen cuotas para ese numeroMes -> no hace nada.
      * - Si no existen -> llama a generarCuotasMes(mes).
      */
-    @Scheduled(cron = "0 0 3 1 * ?")   // minuto 0, hora 3, día 1, todos los meses
+    @Scheduled(cron = "0 0 3 1 * ?")
     @Transactional
     public void generarCuotasMesActualSiFalta() {
         LocalDate hoy = LocalDate.now();

@@ -294,21 +294,33 @@ public Cuota actualizar(Long id, Cuota datos) {
     }
 
     // Ejemplo: obtener precio para una embarcación en un mes
-    private BigDecimal obtenerPrecioMesParaEmbarcacion(Embarcacion emb, LocalDate mes) {
-        if (emb.getTipoCama() == null) {
-            throw new IllegalArgumentException("La embarcación " + emb.getIdEmbarcacion()
-                    + " no tiene tipo de cama asignado");
-        }
-
-        LocalDate mesNormalizado = mes.withDayOfMonth(1);
-
-        TarifaCama tarifa = tarifaRepo.findByTipoCamaAndNumeroMes(emb.getTipoCama(), mesNormalizado)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No hay tarifa definida para tipo de cama " + emb.getTipoCama()
-                                + " en el mes " + mesNormalizado));
-
-        return tarifa.getPrecio();
+private BigDecimal obtenerPrecioMesParaEmbarcacion(Embarcacion emb, LocalDate mes) {
+    if (emb.getTipoCama() == null) {
+        throw new IllegalArgumentException("La embarcación " + emb.getIdEmbarcacion()
+                + " no tiene tipo de cama asignado");
     }
+
+    LocalDate mesNormalizado = mes.withDayOfMonth(1);
+
+    TarifaCama tarifa = tarifaRepo
+            .findTopByTipoCamaAndNumeroMesLessThanEqualOrderByNumeroMesDesc(
+                    emb.getTipoCama(),
+                    mesNormalizado
+            )
+            .orElseThrow(() -> new IllegalArgumentException(
+                    "No hay ninguna tarifa definida para tipo de cama " + emb.getTipoCama()
+                            + " en o antes del mes " + mesNormalizado));
+
+    // (Opcional pero recomendable) loguear si estás usando una tarifa vieja
+    if (!tarifa.getNumeroMes().equals(mesNormalizado)) {
+        // podés inyectar un logger en el service y loguear un warning
+        // log.warn("Usando tarifa antigua de {} para el mes {} y tipo {}",
+        //          tarifa.getNumeroMes(), mesNormalizado, emb.getTipoCama());
+    }
+
+    return tarifa.getPrecio();
+}
+
 
     /**
      * Genera cuotas para TODAS las embarcaciones cuyo usuario sea PROPIETARIO
