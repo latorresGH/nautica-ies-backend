@@ -1,12 +1,23 @@
 package com.nautica.backend.nautica_ies_backend.auth;
 
-import com.nautica.backend.nautica_ies_backend.auth.dto.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.nautica.backend.nautica_ies_backend.auth.dto.JwtResponse;
+import com.nautica.backend.nautica_ies_backend.auth.dto.LoginRequest;
+import com.nautica.backend.nautica_ies_backend.auth.dto.RefreshTokenRequest;
+import com.nautica.backend.nautica_ies_backend.auth.dto.UserSummary;
 import com.nautica.backend.nautica_ies_backend.security.JwtService;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
-
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")

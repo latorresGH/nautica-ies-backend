@@ -16,12 +16,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Tareas.BarSemana;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Tareas.ResumenTareasOperarioDTO;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
 import com.nautica.backend.nautica_ies_backend.models.Tarea;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
+import com.nautica.backend.nautica_ies_backend.models.enums.TipoTarea;
 import com.nautica.backend.nautica_ies_backend.repository.OperarioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.TareaRepository;
-import com.nautica.backend.nautica_ies_backend.controllers.dto.Tareas.BarSemana;
 
 
 @Service
@@ -146,4 +148,37 @@ public class TareaService {
         return new BarSemana(labels, values);
     }
 
+    public Tarea confirmarTarea(Long id, String notaOperario) {
+        Tarea t = obtener(id);
+
+        if (t.getEstado() != EstadoTarea.pendiente) {
+            throw new IllegalStateException("Solo se pueden confirmar tareas en estado pendiente");
+        }
+
+        t.setEstado(EstadoTarea.realizado);
+        t.setNotaOperario(notaOperario);
+
+        // if (tiene fechaConfirmacion)
+        // t.setFechaConfirmacion(LocalDateTime.now(ZoneId.of("America/Argentina/Cordoba")));
+
+        return repo.save(t);
+    }
+
+    public ResumenTareasOperarioDTO resumenPendientesHoy() {
+        LocalDate hoy = LocalDate.now(ZoneId.of("America/Argentina/Cordoba"));
+
+        long pendLavado = repo.countByFechaAndEstadoAndTipoTarea(
+                hoy,
+                EstadoTarea.pendiente,
+                TipoTarea.lavado
+        );
+
+        long pendBotado = repo.countByFechaAndEstadoAndTipoTarea(
+                hoy,
+                EstadoTarea.pendiente,
+                TipoTarea.botado
+        );
+
+        return new ResumenTareasOperarioDTO(pendLavado, pendBotado);
+    }
 }

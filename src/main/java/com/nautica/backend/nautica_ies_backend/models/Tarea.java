@@ -61,6 +61,9 @@ public class Tarea {
     @JoinColumn(name = "id_turno")
     private Turno turno;
 
+    @Column(name = "nota_operario", length = 1000)
+    private String notaOperario;
+
     // getters/setters
     public Long getIdTarea() {
         return idTarea;
@@ -120,5 +123,13 @@ public class Tarea {
 
     public void setEstado(EstadoTarea estado) {
         this.estado = estado;
+    }
+
+        public String getNotaOperario() {
+        return notaOperario;
+    }
+
+    public void setNotaOperario(String notaOperario) {
+        this.notaOperario = notaOperario;
     }
 }
