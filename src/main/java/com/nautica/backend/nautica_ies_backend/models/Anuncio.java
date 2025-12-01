@@ -37,7 +37,7 @@ public class Anuncio {
     @Column(name = "hora_publicacion")
     private LocalTime horaPublicacion = LocalTime.now();
 
-    @Column(name = "destinatarios", length = 100, nullable = false)
+    @Column(name = "destinatarios", length = 100, nullable = true)
     private String destinatarios;
 
     // Getters y Setters
