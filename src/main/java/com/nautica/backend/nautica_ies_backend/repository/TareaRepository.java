@@ -12,6 +12,7 @@ import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
 import com.nautica.backend.nautica_ies_backend.models.enums.TipoTarea;
 
 public interface TareaRepository extends JpaRepository<Tarea, Long> {
+    
 
     long countByFecha(LocalDate fecha);
 

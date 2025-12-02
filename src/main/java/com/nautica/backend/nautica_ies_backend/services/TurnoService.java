@@ -269,4 +269,5 @@ private void verificarCapacidadGlobal(LocalDate fecha, LocalTime inicio, LocalTi
   }
 }
 
+
 }

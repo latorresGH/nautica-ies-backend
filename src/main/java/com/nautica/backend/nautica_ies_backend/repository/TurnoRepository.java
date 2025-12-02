@@ -14,6 +14,9 @@ import com.nautica.backend.nautica_ies_backend.models.Usuario;
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
 
     long countByFecha(LocalDate fecha);
+    
+    List<Turno> findByFecha(LocalDate fecha);
+
 
     // ✅ Turnos de un día, ordenados por hora
     List<Turno> findByFechaOrderByHoraInicioAsc(LocalDate fecha);

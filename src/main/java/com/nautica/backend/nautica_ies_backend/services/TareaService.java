@@ -25,7 +25,6 @@ import com.nautica.backend.nautica_ies_backend.models.enums.TipoTarea;
 import com.nautica.backend.nautica_ies_backend.repository.OperarioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.TareaRepository;
 
-
 @Service
 public class TareaService {
 
@@ -95,7 +94,7 @@ public class TareaService {
         repo.deleteById(id);
     }
 
-        public List<Tarea> listarPorFecha(LocalDate fecha) {
+    public List<Tarea> listarPorFecha(LocalDate fecha) {
         return repo.findByFechaOrderByHoraAsc(fecha);
     }
 
@@ -106,7 +105,7 @@ public class TareaService {
 
         // offset=0 -> semana actual, offset=1 -> semana pasada (S-1)
         LocalDate base = hoy.minusWeeks(offset);
-        LocalDate lunes   = base.with(DayOfWeek.MONDAY);
+        LocalDate lunes = base.with(DayOfWeek.MONDAY);
         LocalDate domingo = base.with(DayOfWeek.SUNDAY);
 
         // ⚠️ Usa el nombre real de tu enum
@@ -114,8 +113,7 @@ public class TareaService {
         List<Tarea> realizadas = repo.findByFechaBetweenAndEstado(
                 lunes,
                 domingo,
-                EstadoTarea.realizado
-        );
+                EstadoTarea.realizado);
 
         Map<LocalDate, Long> conteo = new HashMap<>();
         for (Tarea t : realizadas) {
@@ -124,19 +122,19 @@ public class TareaService {
         }
 
         List<String> labels = new ArrayList<>();
-        List<Long> values   = new ArrayList<>();
+        List<Long> values = new ArrayList<>();
 
         LocalDate cursor = lunes;
         while (!cursor.isAfter(domingo)) {
             DayOfWeek dow = cursor.getDayOfWeek();
             String label = switch (dow) {
-                case MONDAY    -> "Lun";
-                case TUESDAY   -> "Mar";
+                case MONDAY -> "Lun";
+                case TUESDAY -> "Mar";
                 case WEDNESDAY -> "Mié";
-                case THURSDAY  -> "Jue";
-                case FRIDAY    -> "Vie";
-                case SATURDAY  -> "Sáb";
-                case SUNDAY    -> "Dom";
+                case THURSDAY -> "Jue";
+                case FRIDAY -> "Vie";
+                case SATURDAY -> "Sáb";
+                case SUNDAY -> "Dom";
             };
 
             labels.add(label);
@@ -170,15 +168,29 @@ public class TareaService {
         long pendLavado = repo.countByFechaAndEstadoAndTipoTarea(
                 hoy,
                 EstadoTarea.pendiente,
-                TipoTarea.lavado
-        );
+                TipoTarea.lavado);
 
         long pendBotado = repo.countByFechaAndEstadoAndTipoTarea(
                 hoy,
                 EstadoTarea.pendiente,
-                TipoTarea.botado
-        );
+                TipoTarea.botado);
 
         return new ResumenTareasOperarioDTO(pendLavado, pendBotado);
     }
+
+    public void cancelarTareasDeFecha(LocalDate fecha, String motivo) {
+        List<Tarea> tareas = repo.findByFecha(fecha);
+        for (Tarea t : tareas) {
+            // Comparación correcta con enum
+            if (t.getEstado() == EstadoTarea.pendiente) {
+                t.setEstado(EstadoTarea.cancelado);
+                t.setNotaOperario(
+                        motivo != null
+                                ? motivo
+                                : "Cancelado automáticamente por cierre del día");
+            }
+        }
+        repo.saveAll(tareas);
+    }
+
 }

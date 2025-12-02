@@ -1,6 +1,7 @@
 package com.nautica.backend.nautica_ies_backend.services;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,21 +19,32 @@ import com.nautica.backend.nautica_ies_backend.repository.AnuncioRepository;
 public class AnuncioService {
 
     private final AnuncioRepository anuncioRepository;
+    private final PushNotificationService pushNotificationService;
 
-    public AnuncioService(AnuncioRepository anuncioRepository) {
+    public AnuncioService(
+        AnuncioRepository anuncioRepository,
+        PushNotificationService pushNotificationService
+    ) {
         this.anuncioRepository = anuncioRepository;
+        this.pushNotificationService = pushNotificationService;
     }
 
     @Transactional
     public AnuncioAdminDTO crearAnuncio(AnuncioAdminRequestDTO dto) {
-        Anuncio a = new Anuncio();
-        a.setTitulo(dto.getTitulo());
-        a.setMensaje(dto.getMensaje());
-        a.setFechaPublicacion(LocalDate.now());
-        a.setHoraPublicacion(java.time.LocalTime.now());
-        a.setFechaExpiracion(dto.getFechaExpiracion());
-        // destinatarios: lo ignoramos
-        Anuncio guardado = anuncioRepository.save(a);
+        Anuncio anuncio = new Anuncio();
+        anuncio.setTitulo(dto.getTitulo());
+        anuncio.setMensaje(dto.getMensaje());
+        anuncio.setFechaPublicacion(LocalDate.now());
+        anuncio.setHoraPublicacion(LocalTime.now());
+        anuncio.setFechaExpiracion(dto.getFechaExpiracion());
+
+        Anuncio guardado = anuncioRepository.save(anuncio);
+
+        try {
+            pushNotificationService.enviarAnuncio(guardado);
+        } catch (Exception e) {
+            System.err.println("Error al enviar notificación push: " + e.getMessage());
+        }
 
         return mapToAdminDTO(guardado);
     }

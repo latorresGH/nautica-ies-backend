@@ -5,6 +5,7 @@ import com.nautica.backend.nautica_ies_backend.models.HorarioOperacion;
 import com.nautica.backend.nautica_ies_backend.repository.CierreExcepcionalRepository;
 import com.nautica.backend.nautica_ies_backend.repository.HorarioOperacionRepository;
 import org.springframework.stereotype.Service;
+import com.nautica.backend.nautica_ies_backend.services.TareaService;
 
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Calendario.*;
 
@@ -17,12 +18,14 @@ import java.util.*;
 @Service
 public class CalendarioService {
 
+    private TareaService tareaService;
     private final HorarioOperacionRepository horarioRepo;
     private final CierreExcepcionalRepository excepcionRepo;
 
-    public CalendarioService(HorarioOperacionRepository horarioRepo, CierreExcepcionalRepository excepcionRepo) {
+    public CalendarioService(HorarioOperacionRepository horarioRepo, CierreExcepcionalRepository excepcionRepo, TareaService tareaService) {
         this.horarioRepo = horarioRepo;
         this.excepcionRepo = excepcionRepo;
+        this.tareaService = tareaService;
     }
 
     public static record DiaDTO(LocalDate fecha, boolean abierto, LocalTime horaApertura, LocalTime horaCierre,
@@ -113,6 +116,8 @@ public class CalendarioService {
         ce.setHoraCierre(null);
         ce.setMotivo(motivo);
         excepcionRepo.save(ce);
+
+        tareaService.cancelarTareasDeFecha(fecha, motivo);
     }
 
     public void cambiarHorarios(LocalDate fecha, List<Franja> franjas) {
