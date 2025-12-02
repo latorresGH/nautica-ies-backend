@@ -123,6 +123,22 @@ public class UsuarioService {
         }
     }
 
+    public void cambiarPassword(Long id, String actual, String nueva) {
+    Usuario u = obtener(id); // ya lanza ResourceNotFoundException si no existe
+
+    // 1) Verificar contraseña actual
+    if (!passwordEncoder.matches(actual, u.getContrasena())) {
+        // podés usar un código de error "semántico" para que el front lo distinga
+        throw new IllegalArgumentException("CONTRASENA_ACTUAL_INCORRECTA");
+    }
+
+    // 2) Setear nueva contraseña hasheada
+    u.setContrasena(passwordEncoder.encode(nueva));
+
+    // 3) Guardar
+    repo.save(u);
+}
+
     /**
      * Elimina un usuario por su ID.
      *

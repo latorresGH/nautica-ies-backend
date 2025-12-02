@@ -21,7 +21,7 @@ import com.nautica.backend.nautica_ies_backend.models.Cliente;
 import com.nautica.backend.nautica_ies_backend.models.Operario;
 import com.nautica.backend.nautica_ies_backend.models.Administrador;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
-
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Usuario.CambiarPasswordRequest;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Usuario.UsuarioBasico;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Usuario.UsuarioCorreo;
 
@@ -235,6 +235,24 @@ public ResponseEntity<Map<String, Object>> obtenerIdsPorCorreo(@RequestParam Str
         }
         return TipoAdministrador.valueOf(raw.trim()); // "gerente" -> GERENTE
     }
+
+    @PutMapping("/{id}/password")
+public ResponseEntity<?> cambiarPassword(
+        @PathVariable Long id,
+        @RequestBody @Valid CambiarPasswordRequest req) {
+    try {
+        service.cambiarPassword(id, req.actual(), req.nueva());
+        // devolvemos JSON simple para que apiPut pueda hacer res.json()
+        return ResponseEntity.ok(Map.of("status", "ok"));
+    } catch (IllegalArgumentException e) {
+        if ("CONTRASENA_ACTUAL_INCORRECTA".equals(e.getMessage())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "CONTRASENA_ACTUAL_INCORRECTA"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
+    }
+}
 
     /**
      * Actualiza un usuario existente.
