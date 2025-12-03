@@ -8,16 +8,28 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public class OperarioCreateRequest {
-    @NotBlank public String nombre;
+
+    @NotBlank
+    public String nombre;
     public String apellido;
-    @Email @NotBlank
-    @JsonAlias({"correo","email"})   // <- acepta "correo" desde el JSON
-    public String correo;      // se mapeará a 'correo'
-    @NotBlank public String telefono;
-    @NotBlank public String legajo;
-    @NotBlank public String puesto;
-    @NotNull  public Boolean activo;
-    @NotBlank public String dni;
-    // opcional: si lo querés permitir, de lo contrario generamos una temporal
+    @Email
+    @NotBlank
+    @JsonAlias({"correo", "email"})
+    public String correo;
+    @NotBlank
+    public String telefono;
+    @NotBlank
+    public String legajo;
+    @NotBlank
+    public String puesto;
+    @NotNull
+    public Boolean activo;
+    @NotBlank
+    public String dni;
+
+    public String direccion;
+    public String localidad;
+    public String provincia;
+
     public String contrasena;
 }

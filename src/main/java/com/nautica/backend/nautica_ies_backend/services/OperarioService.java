@@ -51,11 +51,15 @@ public class OperarioService {
         op.setNombre(req.nombre);
         op.setApellido(req.apellido);
         op.setDni(req.dni);
-        op.setCorreo(req.correo);      // email -> correo
+        op.setCorreo(req.correo);
         op.setTelefono(req.telefono);
         op.setActivo(req.activo);
         op.setLegajo(req.legajo);
         op.setPuesto(req.puesto);
+
+        op.setDireccion(req.direccion);
+        op.setLocalidad(req.localidad);
+        op.setProvincia(req.provincia);
 
         String raw = (req.contrasena != null && !req.contrasena.isBlank())
                 ? req.contrasena
@@ -72,7 +76,7 @@ public class OperarioService {
     public Operario actualizarDesdeDto(Long id, OperarioUpdateRequest req) {
         Operario op = obtener(id);
 
-        op.setRol(RolUsuario.operario); // forzar
+        op.setRol(RolUsuario.operario);
         op.setNombre(req.nombre);
         op.setApellido(req.apellido);
         op.setDni(req.dni);
@@ -81,6 +85,10 @@ public class OperarioService {
         op.setActivo(req.activo);
         op.setLegajo(req.legajo);
         op.setPuesto(req.puesto);
+
+        op.setDireccion(req.direccion);
+        op.setLocalidad(req.localidad);
+        op.setProvincia(req.provincia);
 
         if (req.contrasena != null && !req.contrasena.isBlank()) {
             op.setContrasena(passwordEncoder.encode(req.contrasena));
@@ -101,8 +109,9 @@ public class OperarioService {
     }
 
     public void eliminar(Long id) {
-        if (!repo.existsById(id))
+        if (!repo.existsById(id)) {
             throw new ResourceNotFoundException("Operario no encontrado");
+        }
         repo.deleteById(id);
     }
 
@@ -113,14 +122,18 @@ public class OperarioService {
 
     public OperarioResponse toResponse(Operario o) {
         return new OperarioResponse(
-            o.getIdUsuario(),
-            o.getNombre(),
-            o.getApellido(),
-            o.getCorreo(),
-            o.getTelefono(),
-            o.getActivo(),
-            o.getLegajo(),
-            o.getPuesto()
+                o.getIdUsuario(),
+                o.getNombre(),
+                o.getApellido(),
+                o.getCorreo(),
+                o.getTelefono(),
+                o.getActivo(),
+                o.getLegajo(),
+                o.getPuesto(),
+                o.getDni(),
+                o.getDireccion(),
+                o.getLocalidad(),
+                o.getProvincia()
         );
     }
 

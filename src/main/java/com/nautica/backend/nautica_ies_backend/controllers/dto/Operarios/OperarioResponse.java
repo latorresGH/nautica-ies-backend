@@ -9,5 +9,9 @@ public record OperarioResponse(
     String telefono,
     Boolean activo,
     String legajo,
-    String puesto
+    String puesto,
+    String dni,
+    String direccion,
+    String localidad,
+    String provincia
 ) {}
