@@ -1,16 +1,13 @@
+// AuthController.java
 package com.nautica.backend.nautica_ies_backend.auth;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.nautica.backend.nautica_ies_backend.auth.dto.JwtResponse;
 import com.nautica.backend.nautica_ies_backend.auth.dto.LoginRequest;
@@ -18,6 +15,9 @@ import com.nautica.backend.nautica_ies_backend.auth.dto.RefreshTokenRequest;
 import com.nautica.backend.nautica_ies_backend.auth.dto.UserSummary;
 import com.nautica.backend.nautica_ies_backend.security.JwtService;
 import com.nautica.backend.nautica_ies_backend.services.UsuarioService;
+import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,19 +39,40 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public JwtResponse login(@RequestBody LoginRequest request) {
-        var authToken = new UsernamePasswordAuthenticationToken(
-                request.correo(),
-                request.contrasena()
-        );
-        authManager.authenticate(authToken); // lanza excepción si falla
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            // 1) Verificar que el usuario exista (tu servicio lanza ResourceNotFoundException si no)
+            usuarioService.buscarPorCorreo(request.correo());
 
-        var user = userDetailsService.loadUserByUsername(request.correo());
-        var access = jwtService.generateAccessToken(user, java.util.Map.of(
-                "rol", user.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER")
-        ));
-        var refresh = jwtService.generateRefreshToken(user);
-        return new JwtResponse(access, refresh);
+            // 2) Autenticar credenciales (Spring Security + PasswordEncoder)
+            var authToken = new UsernamePasswordAuthenticationToken(
+                    request.correo(),
+                    request.contrasena()
+            );
+            authManager.authenticate(authToken); // lanza BadCredentialsException si la pass no matchea
+
+            // 3) Generar tokens
+            var user = userDetailsService.loadUserByUsername(request.correo());
+            var access = jwtService.generateAccessToken(user, Map.of(
+                    "rol", user.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER")
+            ));
+            var refresh = jwtService.generateRefreshToken(user);
+
+            return ResponseEntity.ok(new JwtResponse(access, refresh));
+
+        } catch (ResourceNotFoundException e) {
+            // Usuario no existe
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "USUARIO_INEXISTENTE"));
+        } catch (BadCredentialsException e) {
+            // Usuario existe, pero la contraseña es incorrecta
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "CONTRASENA_INCORRECTA"));
+        } catch (Exception e) {
+            // Cualquier cosa inesperada → 500 genérico
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "ERROR_INTERNO"));
+        }
     }
 
     @PostMapping("/refresh")
@@ -66,51 +87,32 @@ public class AuthController {
         return new JwtResponse(access, request.refreshToken());
     }
 
-    // @GetMapping("/me")
-    // public UserSummary me(org.springframework.security.core.Authentication auth) {
-    //     // auth.getName() = "username" del token → en tu caso, el correo
-    //     var correo = auth.getName();
-    //     var u = usuarioService.buscarPorCorreo(correo);
-    //     return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
-    // }
-
-
-
-    /**
-     * ACTUALIZAR FUNCION EN UN FUTURO, AHORA ESTA PUESTA PARA QUE LA PUEDA LEER CUALQUIER SERVIDOR SIN PERMISOS
-     * @param authHeader
-     * @param correoFallback
-     * @return
-     */
     @GetMapping("/me")
-public UserSummary me(
-        @RequestHeader(value = "Authorization", required = false) String authHeader,
-        @RequestParam(value = "correo", required = false) String correoFallback
-) {
-    String correo = null;
+    public UserSummary me(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "correo", required = false) String correoFallback
+    ) {
+        String correo = null;
 
-    // 1) Si viene Authorization: Bearer <token>, lo usamos
-    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        String token = authHeader.substring(7);
-        String username = jwtService.extractUsername(token);
-        var user = userDetailsService.loadUserByUsername(username);
-        if (!jwtService.isTokenValid(token, user)) {
-            throw new BadCredentialsException("Token inválido");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            String username = jwtService.extractUsername(token);
+            var user = userDetailsService.loadUserByUsername(username);
+            if (!jwtService.isTokenValid(token, user)) {
+                throw new BadCredentialsException("Token inválido");
+            }
+            correo = username;
         }
-        correo = username; // en tu app, el username es el correo
-    }
 
-    // 2) Fallback DEV: si no hay token, permite ?correo=...
-    if (correo == null && correoFallback != null && !correoFallback.isBlank()) {
-        correo = correoFallback;
-    }
+        if (correo == null && correoFallback != null && !correoFallback.isBlank()) {
+            correo = correoFallback;
+        }
 
-    if (correo == null) {
-        // Importante: 401 en vez de 500
-        throw new BadCredentialsException("No autenticado");
-    }
+        if (correo == null) {
+            throw new BadCredentialsException("No autenticado");
+        }
 
-    var u = usuarioService.buscarPorCorreo(correo);
-    return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
-}
+        var u = usuarioService.buscarPorCorreo(correo);
+        return new UserSummary(u.getNombre(), u.getApellido(), u.getCorreo(), u.getRol().name());
+    }
 }
