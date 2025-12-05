@@ -2,6 +2,7 @@
 package com.nautica.backend.nautica_ies_backend.repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,4 +45,6 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     Optional<Tarea> findByTurno_Id(Long id);
 
     Optional<Tarea> findTopByOrderByNumeroTareaDesc();
+
+    long countByFechaAndHoraAndEstadoNot(LocalDate fecha, LocalTime hora, EstadoTarea estado);
 }
