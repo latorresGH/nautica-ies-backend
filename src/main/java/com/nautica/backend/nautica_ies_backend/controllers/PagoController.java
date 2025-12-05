@@ -1,13 +1,10 @@
-package com.nautica.backend.nautica_ies_backend.controllers;
+/*package com.nautica.backend.nautica_ies_backend.controllers;
 
-import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.*;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoCreateRequest;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/pagos")
@@ -20,38 +17,17 @@ public class PagoController {
     }
 
     /**
-     * Crear/registrar un pago sobre una cuota existente.
-     * Body: { cuotaId, medio, fecha?, monto? }
-     */
-    @PostMapping
-    public ResponseEntity<PagoDetail> crear(@RequestBody @Valid PagoCreateRequest body) {
-        return ResponseEntity.ok(service.registrarPago(body));
-    }
-
-    /**
-     * Listar pagos con filtros.
-     * GET /api/pagos?clienteId=&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&medio=&page=&size=
-     */
-    @GetMapping
-    public ResponseEntity<Page<PagoSummary>> listar(
-            @RequestParam(required = false) Long clienteId,
-            @RequestParam(required = false) String desde,
-            @RequestParam(required = false) String hasta,
-            @RequestParam(required = false) String medio,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+     * Registrar pago de varias cuotas de un cliente (panel admin).
+     * URL: POST /api/pagos/admin/{clienteId}/cuotas
+     * Body: { cuotasIds: number[], medio: 'efectivo' | 'transferencia' | 'tarjeta' | 'debito_automatico', fecha?: 'YYYY-MM-DD' }
+     *//*
+    @PostMapping("/admin/{clienteId}/cuotas")
+    public ResponseEntity<Void> registrarPagoCuotas(
+            @PathVariable Long clienteId,
+            @RequestBody @Valid PagoCreateRequest body
     ) {
-        LocalDate d = (desde == null || desde.isBlank()) ? null : LocalDate.parse(desde);
-        LocalDate h = (hasta == null || hasta.isBlank()) ? null : LocalDate.parse(hasta);
-        var pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(service.listarPagos(clienteId, d, h, medio, pageable));
+        service.registrarPagoCuotas(clienteId, body);
+        // no hace falta devolver body; con 204 alcanza para que el front sepa que salió bien
+        return ResponseEntity.noContent().build();
     }
-
-    /**
-     * Traer un pago por id (idCuota) — válido si la cuota está pagada.
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<PagoDetail> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(service.obtenerPago(id));
-    }
-}
+} */
