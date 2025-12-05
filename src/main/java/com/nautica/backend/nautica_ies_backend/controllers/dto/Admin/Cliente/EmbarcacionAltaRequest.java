@@ -1,9 +1,7 @@
-// EmbarcacionClienteInfoDTO.java
-// src/main/java/com/nautica/backend/.../controllers/dto/Admin/Cliente/EmbarcacionClienteInfoDTO.java
+// EmbarcacionAltaRequest.java
 package com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente;
 
-public record EmbarcacionClienteInfoDTO(
-        Long id,
+public record EmbarcacionAltaRequest(
         String nombre,
         String matricula,
         String marcaCasco,
@@ -12,5 +10,5 @@ public record EmbarcacionClienteInfoDTO(
         String modeloMotor,
         String numMotor,
         Integer potenciaMotor,
-        String tipoCama   // enum en texto: "cama_grande", etc.
+        String tipoCama // (cama_grande, cama_mediana, etc.)
 ) {}
