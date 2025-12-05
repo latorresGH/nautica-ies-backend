@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+//import para alta de clientes y embarcaciones
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Cliente.*;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cliente.ClientePatchRequest;
 import com.nautica.backend.nautica_ies_backend.models.Cliente;
@@ -154,6 +155,13 @@ public class ClienteController {
         return ResponseEntity.ok(service.bajaAdmin(id));
     }
 
+    @PatchMapping("/admin/{id}/reactivar")
+    public ResponseEntity<Void> reactivar(@PathVariable Long id) {
+        service.reactivarCliente(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
     /**
      * Listado ADMIN de clientes en formato resumen extendido.
      * Por ahora devuelve sólo datos básicos (sin embarcaciones ni estado de cuotas real).
@@ -173,7 +181,23 @@ public class ClienteController {
         public ResponseEntity<ClienteInfoAdminDTO> infoAdmin(@PathVariable Long id) {
         ClienteInfoAdminDTO dto = service.obtenerInfoAdmin(id);
     return ResponseEntity.ok(dto);
-}
+    }
+
+        /**
+     * Alta completa de cliente + embarcaciones + autorizados.
+     * Opción A: un solo request transaccional.
+     *
+     * POST /api/clientes/admin/alta-completa
+     */
+    @PostMapping("/admin/alta-completa")
+    public ResponseEntity<ClienteInfoAdminDTO> altaCompleta(
+            @RequestBody @Valid ClienteAltaRequest body) {
+        ClienteDetail dto = service.altaCompleta(body);
+        ClienteInfoAdminDTO info = service.obtenerInfoAdmin(dto.id()); 
+        return ResponseEntity.status(201).body(info);
+    }
+
+
 
 
 
