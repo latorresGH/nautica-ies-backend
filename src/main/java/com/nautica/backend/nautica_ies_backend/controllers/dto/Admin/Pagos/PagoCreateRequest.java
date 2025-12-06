@@ -1,16 +1,19 @@
+// controllers/dto/Admin/Pagos/PagoCreateRequest.java
 package com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos;
 
-import jakarta.validation.constraints.*;
-import java.math.BigDecimal;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.List;
+
+import com.nautica.backend.nautica_ies_backend.models.enums.FormaPago;
 
 /**
- * Registrar pago sobre una cuota existente.
- * Elegimos operar por cuotaId para ser inequívocos.
+ * Registrar pago de VARIAS cuotas de un mismo cliente.
+ * El monto se toma de la cuota; acá solo elegís cuotas + medio + fecha.
  */
 public record PagoCreateRequest(
-        @NotNull Long cuotaId,
-        @NotBlank String medio,          // "efectivo" | "transferencia" | "tarjeta" | "debito_automatico"
-        LocalDate fecha,                 // opcional, default = hoy
-        @Positive BigDecimal monto       // opcional, si se envía actualiza el monto de la cuota
+        @NotEmpty List<Long> cuotasIds,  // IDs de cuotas seleccionadas
+        @NotNull FormaPago medio,       // TRANSFERENCIA, EFECTIVO, etc.
+        LocalDate fecha                 // opcional, default = hoy
 ) {}

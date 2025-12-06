@@ -10,11 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaAdminDTO;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoCuotasRequest;
+
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
 import com.nautica.backend.nautica_ies_backend.models.Cuota;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService.DeudaCliente;
 
-import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
+
 
 import jakarta.validation.Valid;
 
@@ -34,7 +38,9 @@ public class CuotaController {
             @RequestParam(defaultValue = "25") int size,
             @RequestParam(defaultValue = "idCuota,asc") String sort) {
         String[] s = sort.split(",");
-        Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort.Direction dir = s.length > 1 && s[1].equalsIgnoreCase("desc")
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
         Sort sortObj = Sort.by(dir, s[0]);
         return ResponseEntity.ok(service.listar(page, size, sortObj));
     }
@@ -62,49 +68,74 @@ public class CuotaController {
         return ResponseEntity.noContent().build();
     }
 
-    // @GetMapping("/by-cliente/actual")
-    // public ResponseEntity<CuotaResumen> cuotaActual(@RequestParam Long clienteId) {
-    //     return ResponseEntity.ok(service.cuotaActualPorCliente(clienteId));
-    // }
+    // GET /api/cuotas/by-cliente/actual?clienteId=1&embarcacionId=2?
+    @GetMapping("/by-cliente/actual")
+    public ResponseEntity<CuotaResumen> cuotaActual(
+            @RequestParam Long clienteId,
+            @RequestParam(required = false) Long embarcacionId) {
 
-    // GET /api/cuotas/by-cliente/actual?clienteId=1
-@GetMapping("/by-cliente/actual")
-public ResponseEntity<CuotaResumen> cuotaActual(@RequestParam Long clienteId,
-                                                   @RequestParam(required = false) Long embarcacionId) {
-    CuotaResumen dto = (embarcacionId == null)
-        ? service.cuotaActualPorCliente(clienteId)
-        : service.cuotaActualPorClienteYEmbarcacion(clienteId, embarcacionId);
-    return (dto == null)
-        ? ResponseEntity.noContent().build() // 204 sin body y sin Content-Type
-        : ResponseEntity.ok(dto);  
-}
+        CuotaResumen dto = (embarcacionId == null)
+                ? service.cuotaActualPorCliente(clienteId)
+                : service.cuotaActualPorClienteYEmbarcacion(clienteId, embarcacionId);
 
-    // ✅ NUEVO: historial de cuotas del cliente (solo lectura para el cliente)
-    // GET /api/cuotas/by-cliente?clienteId=2
+        return (dto == null)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(dto);
+    }
+
+    // historial de cuotas del cliente
     @GetMapping("/by-cliente")
     public ResponseEntity<List<CuotaResumen>> cuotasPorCliente(@RequestParam Long clienteId) {
         return ResponseEntity.ok(service.listarCuotasCliente(clienteId));
     }
 
-    // ✅ NUEVO: resumen de deuda para mostrar en el front
-    // GET /api/cuotas/by-cliente/deuda?clienteId=2
+    // resumen simple de deuda
     @GetMapping("/by-cliente/deuda")
     public ResponseEntity<DeudaCliente> deudaCliente(@RequestParam Long clienteId) {
         return ResponseEntity.ok(service.resumenDeudaCliente(clienteId));
     }
 
-    // GET /api/cuotas/by-cliente/mes-actual-resumen?clienteId=2
-@GetMapping("/by-cliente/mes-actual-resumen")
-public ResponseEntity<ResumenCuotaMesCliente> resumenMesActualCliente(
-        @RequestParam Long clienteId) {
+    // resumen del mes actual (vista cliente)
+    @GetMapping("/by-cliente/mes-actual-resumen")
+    public ResponseEntity<ResumenCuotaMesCliente> resumenMesActualCliente(
+            @RequestParam Long clienteId) {
 
-    LocalDate hoy = LocalDate.now();
-    var dto = service.resumenCuotaMesCliente(clienteId, hoy);
+        LocalDate hoy = LocalDate.now();
+        var dto = service.resumenCuotaMesCliente(clienteId, hoy);
 
-    if (dto == null) {
+        if (dto == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(dto);
+    }
+
+    /* ===========================================================
+     *  NUEVO: endpoints ADMIN para registrar pagos
+     * =========================================================== */
+
+    // GET /api/cuotas/admin/{clienteId}/impagas
+    /*@GetMapping("/admin/{clienteId}/impagas")
+    public ResponseEntity<List<CuotaAdminDTO>> cuotasImpagasPorCliente(@PathVariable Long clienteId) {
+        return ResponseEntity.ok(service.listarCuotasImpagasPorCliente(clienteId));
+    }*/
+
+    // POST /api/cuotas/admin/pagar
+    @PostMapping("/admin/pagar")
+    public ResponseEntity<Void> registrarPagoCuotas(@RequestBody @Valid PagoCuotasRequest body) {
+        service.registrarPagoCuotas(body);
         return ResponseEntity.noContent().build();
     }
-    return ResponseEntity.ok(dto);
-}
+
+        /**
+     * Listado ADMIN: cuotas impagas (pendientes + vencidas) de un cliente,
+     * con info de embarcación.
+     *
+     * GET /api/cuotas/admin/{clienteId}/impagas
+     */
+    @GetMapping("/admin/{clienteId}/impagas")
+    public ResponseEntity<List<CuotaAdminDTO>> cuotasImpagasAdmin(@PathVariable Long clienteId) {
+        return ResponseEntity.ok(service.listarCuotasImpagasPorCliente(clienteId));
+    }
+
 
 }

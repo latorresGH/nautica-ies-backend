@@ -129,4 +129,69 @@ public class PedidoService {
         }
         return (int) count;
     }
+
+    @Transactional
+public Pedido actualizarEstadoPedido(Long idPedido, String nuevoEstadoRaw) {
+    Pedido pedido = pedidoRepository.findById(idPedido)
+            .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id " + idPedido));
+
+    String estadoAnterior = Optional.ofNullable(pedido.getEstado())
+            .orElse("pendiente")
+            .toLowerCase();
+
+    String nuevoEstado = Optional.ofNullable(nuevoEstadoRaw)
+            .orElse("pendiente")
+            .toLowerCase();
+
+    // Si no cambia nada, devolvemos tal cual
+    if (estadoAnterior.equals(nuevoEstado)) {
+        return pedido;
+    }
+
+    // --- REGLAS DE STOCK ---
+
+    // 1) Pasamos de NO cancelado -> cancelado  => devolver stock
+    if (!estadoAnterior.equals("cancelado") && nuevoEstado.equals("cancelado")) {
+        if (pedido.getItems() != null) {
+            pedido.getItems().forEach(item -> {
+                Producto producto = item.getProducto();
+                if (producto != null) {
+                    int stockActual = Optional.ofNullable(producto.getStock()).orElse(0);
+                    int cantidad = Optional.ofNullable(item.getCantidad()).orElse(0);
+                    producto.setStock(stockActual + cantidad);
+                    // si querés ser explícito:
+                    // productoRepository.save(producto);
+                }
+            });
+        }
+    }
+
+    // 2) (OPCIONAL) Pasamos de cancelado -> otro estado => volver a descontar stock
+    // Solo si querés permitir "reactivar" pedidos
+    if (estadoAnterior.equals("cancelado") && !nuevoEstado.equals("cancelado")) {
+        if (pedido.getItems() != null) {
+            pedido.getItems().forEach(item -> {
+                Producto producto = item.getProducto();
+                if (producto != null) {
+                    int stockActual = Optional.ofNullable(producto.getStock()).orElse(0);
+                    int cantidad = Optional.ofNullable(item.getCantidad()).orElse(0);
+
+                    if (stockActual < cantidad) {
+                        throw new IllegalStateException("No hay stock suficiente para reactivar el pedido del producto "
+                                + producto.getNombre() + ". Stock: " + stockActual + ", necesario: " + cantidad);
+                    }
+
+                    producto.setStock(stockActual - cantidad);
+                    // productoRepository.save(producto);
+                }
+            });
+        }
+    }
+
+    // Finalmente, actualizamos el estado
+    pedido.setEstado(nuevoEstado);
+
+    // Como estamos en @Transactional, con esto alcanza
+    return pedidoRepository.save(pedido);
+}
 }

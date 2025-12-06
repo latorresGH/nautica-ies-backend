@@ -81,18 +81,13 @@ public class ProductoService {
         return toAdminDTO(guardado);
     }
 
-    /** "Eliminar": por ahora lo hacemos lógico cambiando estado */
-    public void eliminarProducto(Long id) {
-        Producto p = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id " + id));
-
-        // si querés eliminar físico:
-        // productoRepository.delete(p);
-
-        // versión soft-delete:
-        p.setEstado("no_disponible");
-        productoRepository.save(p);
+ public void eliminarProducto(Long id) {
+    if (!productoRepository.existsById(id)) {
+        throw new ResourceNotFoundException("Producto no encontrado con id " + id);
     }
+    productoRepository.deleteById(id);
+}
+
 
     /* ================== MAPPERS INTERNOS ================== */
 

@@ -42,13 +42,15 @@ public class TurnoService {
     this.clienteRepo = clienteRepo;
   }
 
-  @Transactional
-  public Turno crear(Turno turno) {
-    validarHoras(turno.getHoraInicio(), turno.getHoraFin());
-    verificarSolapamiento(null, turno.getFecha(), turno.getHoraInicio(), turno.getHoraFin(),
-        turno.getEmbarcacion().getIdEmbarcacion());
-    return turnoRepo.save(turno);
-  }
+@Transactional
+public Turno crear(Turno turno) {
+  validarHoras(turno.getHoraInicio(), turno.getHoraFin());
+  verificarSolapamiento(null, turno.getFecha(), turno.getHoraInicio(), turno.getHoraFin(),
+      turno.getEmbarcacion().getIdEmbarcacion());
+  verificarCapacidadGlobal(turno.getFecha(), turno.getHoraInicio());
+  return turnoRepo.save(turno);
+}
+
 
   @Transactional(readOnly = true)
   public Turno obtener(Long id) {
@@ -144,19 +146,19 @@ public TurnoCliente solicitarTurno(TurnoSolicitudRequest req) {
   t.setHoraFin(req.horaFin());   // 👈 ACÁ SE RESPETA LO DEL FRONT
 
   // 👉 valida que fin sea posterior a inicio
-  validarHoras(t.getHoraInicio(), t.getHoraFin());
+validarHoras(t.getHoraInicio(), t.getHoraFin());
 
   // 👉 valida solapamiento para ESA embarcación
-  verificarSolapamiento(
-      null,
-      t.getFecha(),
-      t.getHoraInicio(),
-      t.getHoraFin(),
-      t.getEmbarcacion().getIdEmbarcacion()
-  );
+verificarSolapamiento(
+    null,
+    t.getFecha(),
+    t.getHoraInicio(),
+    t.getHoraFin(),
+    t.getEmbarcacion().getIdEmbarcacion()
+);
 
   // 👉 valida capacidad global (2 a la vez, si lo tenés activo)
-  verificarCapacidadGlobal(t.getFecha(), t.getHoraInicio(), t.getHoraFin());
+  verificarCapacidadGlobal(t.getFecha(), t.getHoraInicio());
 
   Turno guardado = turnoRepo.save(t);
 
@@ -259,15 +261,31 @@ public List<TurnoCliente> listarPorFechaDTO(LocalDate fecha) {
 }
 
 
-
 private static final int CAPACIDAD_POR_BLOQUE = 2;
 
-private void verificarCapacidadGlobal(LocalDate fecha, LocalTime inicio, LocalTime fin) {
-  long ocupados = turnoRepo.countOverlapInFecha(fecha, inicio, fin);
-  if (ocupados >= CAPACIDAD_POR_BLOQUE) {
-    throw new IllegalStateException("TURNOS_CAP_GLOBAL");
-  }
+private void verificarCapacidadGlobal(LocalDate fecha, LocalTime inicio) {
+    // Normalizar al bloque de 15' (por si en algún momento llega algo raro)
+    int minuto = inicio.getMinute();
+    int bloque = (minuto / 15) * 15; // 0, 15, 30, 45
+
+    LocalTime bloqueInicio = inicio
+            .withMinute(bloque)
+            .withSecond(0)
+            .withNano(0);
+
+    // ⬇️ contamos SOLO tareas que NO estén canceladas
+    long ocupados = tareaRepo.countByFechaAndHoraAndEstadoNot(
+            fecha,
+            bloqueInicio,
+            EstadoTarea.cancelado
+    );
+
+    if (ocupados >= CAPACIDAD_POR_BLOQUE) {
+        throw new IllegalStateException("TURNOS_CAP_GLOBAL");
+    }
 }
+
+
 
 
 }
