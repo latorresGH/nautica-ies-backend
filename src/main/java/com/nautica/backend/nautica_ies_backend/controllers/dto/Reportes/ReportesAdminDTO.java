@@ -19,58 +19,100 @@ public class ReportesAdminDTO {
     private AnunciosReportDTO anuncios;
     private EcommerceReportDTO ecommerce;
 
-    // getters & setters
-    public LocalDate getDesde() { return desde; }
-    public void setDesde(LocalDate desde) { this.desde = desde; }
+    public LocalDate getDesde() {
+        return desde;
+    }
 
-    public LocalDate getHasta() { return hasta; }
-    public void setHasta(LocalDate hasta) { this.hasta = hasta; }
+    public void setDesde(LocalDate desde) {
+        this.desde = desde;
+    }
 
-    public ClientesReportDTO getClientes() { return clientes; }
-    public void setClientes(ClientesReportDTO clientes) { this.clientes = clientes; }
+    public LocalDate getHasta() {
+        return hasta;
+    }
 
-    public EmbarcacionesReportDTO getEmbarcaciones() { return embarcaciones; }
-    public void setEmbarcaciones(EmbarcacionesReportDTO embarcaciones) { this.embarcaciones = embarcaciones; }
+    public void setHasta(LocalDate hasta) {
+        this.hasta = hasta;
+    }
 
-    public TurnosReportDTO getTurnos() { return turnos; }
-    public void setTurnos(TurnosReportDTO turnos) { this.turnos = turnos; }
+    public ClientesReportDTO getClientes() {
+        return clientes;
+    }
 
-    public EconomicoReportDTO getEconomico() { return economico; }
-    public void setEconomico(EconomicoReportDTO economico) { this.economico = economico; }
+    public void setClientes(ClientesReportDTO clientes) {
+        this.clientes = clientes;
+    }
 
-    public CalendarioReportDTO getCalendario() { return calendario; }
-    public void setCalendario(CalendarioReportDTO calendario) { this.calendario = calendario; }
+    public EmbarcacionesReportDTO getEmbarcaciones() {
+        return embarcaciones;
+    }
 
-    public AnunciosReportDTO getAnuncios() { return anuncios; }
-    public void setAnuncios(AnunciosReportDTO anuncios) { this.anuncios = anuncios; }
+    public void setEmbarcaciones(EmbarcacionesReportDTO embarcaciones) {
+        this.embarcaciones = embarcaciones;
+    }
 
-    public EcommerceReportDTO getEcommerce() { return ecommerce; }
-    public void setEcommerce(EcommerceReportDTO ecommerce) { this.ecommerce = ecommerce; }
+    public TurnosReportDTO getTurnos() {
+        return turnos;
+    }
 
-    // ================== SUB-DTOs ==================
+    public void setTurnos(TurnosReportDTO turnos) {
+        this.turnos = turnos;
+    }
 
-    // ---------- 1. CLIENTES ----------
+    public EconomicoReportDTO getEconomico() {
+        return economico;
+    }
+
+    public void setEconomico(EconomicoReportDTO economico) {
+        this.economico = economico;
+    }
+
+    public CalendarioReportDTO getCalendario() {
+        return calendario;
+    }
+
+    public void setCalendario(CalendarioReportDTO calendario) {
+        this.calendario = calendario;
+    }
+
+    public AnunciosReportDTO getAnuncios() {
+        return anuncios;
+    }
+
+    public void setAnuncios(AnunciosReportDTO anuncios) {
+        this.anuncios = anuncios;
+    }
+
+    public EcommerceReportDTO getEcommerce() {
+        return ecommerce;
+    }
+
+    public void setEcommerce(EcommerceReportDTO ecommerce) {
+        this.ecommerce = ecommerce;
+    }
+
+    // ============================================================
+    // SUB-DTOs
+    // ============================================================
+
+    // ---------- A. CLIENTES ----------
     public static class ClientesReportDTO {
         public long totalActivos;
         public long totalInactivos;
         public long totalClientes;
 
-        // "2025-01" -> altas
         public Map<YearMonth, Long> altasPorMes;
 
-        // deudas
         public Map<YearMonth, BigDecimal> deudaTotalPorMes;
         public long clientesConCuotasVencidas;
         public List<ClienteDeudorDTO> topDeudores;
         public List<PagoLineaTiempoDTO> lineaPagosImpagos;
 
-        // crecimiento
         public long clientesNuevosUltimos30Dias;
         public long clientesNuevosUltimoAnio;
         public Map<String, Long> clientesNuevosPorTemporada;
 
-        // actividad
-        public long clientesSinActividad; // sin turnos ni pagos en X meses
+        public long clientesSinActividad;
     }
 
     public static class ClienteDeudorDTO {
@@ -85,21 +127,19 @@ public class ReportesAdminDTO {
         public BigDecimal montoImpago;
     }
 
-    // ---------- 2. EMBARCACIONES / CAMAS ----------
+    // ---------- B. EMBARCACIONES / CAMAS ----------
     public static class EmbarcacionesReportDTO {
         public long totalEmbarcaciones;
-        // idCliente -> cantidad de embarcaciones (en tu modelo ahora es 0 o 1)
         public Map<Long, Long> embarcacionesPorCliente;
 
-        // ocupación por mes (número de embarcaciones asignadas a camas, aprox)
         public Map<YearMonth, Long> ocupacionPorMes;
-        public Map<String, Long> demandaPorTipoCama; // TipoCama.name() -> count
+        public Map<String, Long> demandaPorTipoCama;
         public List<YearMonth> mesesMayorDemanda;
     }
 
-    // ---------- 3. TURNOS ----------
+    // ---------- C. TURNOS ----------
     public static class TurnosReportDTO {
-        public Map<String, Long> turnosPorTipo;    // "LAVADO"/"BOTADO"/"OTRO" (desde Tarea)
+        public Map<String, Long> turnosPorTipo;
         public Map<LocalDate, Long> turnosPorDia;
 
         public long totalMesActual;
@@ -109,13 +149,13 @@ public class ReportesAdminDTO {
 
         public long turnosCancelados;
         public double tasaCancelacion;
-        public Map<String, Long> demandaPorFranjaHoraria; // "08:00-10:00" -> count
+        public Map<String, Long> demandaPorFranjaHoraria;
     }
 
-    // ---------- 5. ECONÓMICO / CUOTAS ----------
+    // ---------- E. ECONÓMICO ----------
     public static class EconomicoReportDTO {
-        public Map<YearMonth, BigDecimal> ingresosPorMes;    // por cuotas pagadas
-        public Map<String, BigDecimal> ingresosTrimestrales; // "2025-Q1" -> total
+        public Map<YearMonth, BigDecimal> ingresosPorMes;
+        public Map<String, BigDecimal> ingresosTrimestrales;
         public BigDecimal proyeccionIngresos;
 
         public long cuotasGeneradas;
@@ -124,21 +164,21 @@ public class ReportesAdminDTO {
         public double porcentajeMorosidad;
     }
 
-    // ---------- 6. CALENDARIO ----------
+    // ---------- F. CALENDARIO ----------
     public static class CalendarioReportDTO {
-        public Map<LocalDate, Boolean> diaHabilitado;          // true/false
+        public Map<LocalDate, Boolean> diaHabilitado;
         public Map<LocalDate, Double> horasEfectivasPorDia;
         public Map<LocalDate, Long> turnosPorDia;
-        public Map<LocalDate, Long> turnosPerdidosPorCierre;   // impacto de días cerrados
+        public Map<LocalDate, Long> turnosPerdidosPorCierre;
     }
 
-    // ---------- 7. ANUNCIOS ----------
+    // ---------- G. ANUNCIOS ----------
     public static class AnunciosReportDTO {
         public long totalAnuncios;
         public Map<LocalDate, Long> anunciosPorFecha;
     }
 
-    // ---------- 8. E-COMMERCE ----------
+    // ---------- MINI E-COMMERCE ----------
     public static class EcommerceReportDTO {
         public Map<LocalDate, BigDecimal> ventasPorDia;
         public Map<YearMonth, BigDecimal> ventasPorMes;
@@ -147,8 +187,6 @@ public class ReportesAdminDTO {
 
         public Map<String, Long> pedidosPorEstado;
         public Map<YearMonth, Long> pedidosPorMes;
-        public Map<String, Long> mediosPagoUsados;    // si más adelante lo agregás
-        public Map<String, Long> fallosPorMedioPago;  // idem
 
         public List<ProductoVentaDTO> topProductos;
         public List<ProductoVentaDTO> productosPocasVentas;

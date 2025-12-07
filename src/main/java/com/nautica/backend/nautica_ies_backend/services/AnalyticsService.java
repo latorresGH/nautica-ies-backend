@@ -116,7 +116,7 @@ public class AnalyticsService {
     }
 
     // ============================================================
-    // 1. CLIENTES
+    // A. CLIENTES
     // ============================================================
     private ClientesReportDTO buildClientesReport(LocalDate desde, LocalDate hasta) {
         ClientesReportDTO c = new ClientesReportDTO();
@@ -130,25 +130,25 @@ public class AnalyticsService {
         c.totalActivos = activos;
         c.totalInactivos = c.totalClientes - activos;
 
-        // Altas por mes (según fechaAlta)
+        // Altas por mes
         Map<YearMonth, Long> altasPorMes = todos.stream()
-                .filter(cl -> cl.getFechaAlta() != null
-                        && !cl.getFechaAlta().isBefore(desde)
-                        && !cl.getFechaAlta().isAfter(hasta))
+                .filter(cl -> cl.getFechaAlta() != null)
+                .filter(cl -> !cl.getFechaAlta().isBefore(desde) && !cl.getFechaAlta().isAfter(hasta))
                 .collect(Collectors.groupingBy(
                         cl -> YearMonth.from(cl.getFechaAlta()),
                         Collectors.counting()
                 ));
         c.altasPorMes = altasPorMes;
 
-        // Deuda total por mes, clientes con cuotas vencidas, ranking de deudores
+        // Cuotas
         List<Cuota> cuotas = cuotaRepo.findAll();
 
-        // deuda total por mes (solo VENCIDA o PENDIENTE, según numeroMes en rango)
+        // Deuda total por mes (pendiente + vencida)
         Map<YearMonth, BigDecimal> deudaPorMes = cuotas.stream()
                 .filter(q -> q.getNumeroMes() != null)
                 .filter(q -> !q.getNumeroMes().isBefore(desde) && !q.getNumeroMes().isAfter(hasta))
-                .filter(q -> q.getEstadoCuota() == EstadoCuota.vencida || q.getEstadoCuota() == EstadoCuota.pendiente)
+                .filter(q -> q.getEstadoCuota() == EstadoCuota.vencida
+                          || q.getEstadoCuota() == EstadoCuota.pendiente)
                 .collect(Collectors.groupingBy(
                         q -> YearMonth.from(q.getNumeroMes()),
                         Collectors.mapping(Cuota::getMonto,
@@ -156,16 +156,17 @@ public class AnalyticsService {
                 ));
         c.deudaTotalPorMes = deudaPorMes;
 
-        // clientes con cuotas vencidas
+        // Clientes con cuotas vencidas
         c.clientesConCuotasVencidas = cuotas.stream()
                 .filter(q -> q.getEstadoCuota() == EstadoCuota.vencida)
                 .map(q -> q.getCliente().getIdUsuario())
                 .distinct()
                 .count();
 
-        // ranking de deudores (sum deuda x cliente)
+        // Ranking de deudores
         Map<Long, BigDecimal> deudaPorCliente = cuotas.stream()
-                .filter(q -> q.getEstadoCuota() == EstadoCuota.vencida || q.getEstadoCuota() == EstadoCuota.pendiente)
+                .filter(q -> q.getEstadoCuota() == EstadoCuota.vencida
+                          || q.getEstadoCuota() == EstadoCuota.pendiente)
                 .collect(Collectors.groupingBy(
                         q -> q.getCliente().getIdUsuario(),
                         Collectors.mapping(Cuota::getMonto,
@@ -186,7 +187,7 @@ public class AnalyticsService {
                 })
                 .collect(Collectors.toList());
 
-        // línea pagos/impagos por periodo (YearMonth)
+        // Línea pagos/impagos
         Map<YearMonth, BigDecimal> pagosPorMes = cuotas.stream()
                 .filter(q -> q.getEstadoCuota() == EstadoCuota.pagada)
                 .filter(q -> q.getFechaPago() != null)
@@ -196,7 +197,7 @@ public class AnalyticsService {
                                 Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
                 ));
 
-        Map<YearMonth, BigDecimal> impagosPorMes = deudaPorMes; // ya lo calculamos arriba
+        Map<YearMonth, BigDecimal> impagosPorMes = deudaPorMes; // ya calculado
 
         Set<YearMonth> periodos = new HashSet<>();
         periodos.addAll(pagosPorMes.keySet());
@@ -213,7 +214,7 @@ public class AnalyticsService {
                 })
                 .collect(Collectors.toList());
 
-        // crecimiento del padrón
+        // Crecimiento del padrón
         LocalDate hoy = LocalDate.now();
         LocalDate hace30 = hoy.minusDays(30);
         LocalDate hace1anio = hoy.minusYears(1);
@@ -226,18 +227,17 @@ public class AnalyticsService {
                 .filter(cl -> cl.getFechaAlta() != null && !cl.getFechaAlta().isBefore(hace1anio))
                 .count();
 
-        // clientes sin actividad (sin turnos ni cuotas) en X meses (por ej. 6)
+        // Clientes sin actividad (sin turnos ni pagos en X meses)
         int mesesInactividad = 6;
         LocalDate corteInactividad = hoy.minusMonths(mesesInactividad);
 
         List<Turno> turnos = turnoRepo.findAll();
-        List<Cuota> cuotasUlt = cuotas; // mismo list
 
         Set<Long> clientesConActividad = new HashSet<>();
         turnos.stream()
                 .filter(t -> !t.getFecha().isBefore(corteInactividad))
                 .forEach(t -> clientesConActividad.add(t.getCliente().getIdUsuario()));
-        cuotasUlt.stream()
+        cuotas.stream()
                 .filter(q -> q.getFechaPago() != null && !q.getFechaPago().isBefore(corteInactividad))
                 .forEach(q -> clientesConActividad.add(q.getCliente().getIdUsuario()));
 
@@ -245,14 +245,13 @@ public class AnalyticsService {
                 .filter(cl -> !clientesConActividad.contains(cl.getIdUsuario()))
                 .count();
 
-        // TODO: clientesNuevosPorTemporada (si querés después jugamos con verano/invierno)
-        c.clientesNuevosPorTemporada = Collections.emptyMap();
+        c.clientesNuevosPorTemporada = Collections.emptyMap(); // si después queremos jugar con verano/invierno
 
         return c;
     }
 
     // ============================================================
-    // 2. EMBARCACIONES / CAMAS
+    // B. EMBARCACIONES / CAMAS
     // ============================================================
     private EmbarcacionesReportDTO buildEmbarcacionesReport(LocalDate desde, LocalDate hasta) {
         EmbarcacionesReportDTO e = new EmbarcacionesReportDTO();
@@ -260,25 +259,19 @@ public class AnalyticsService {
         List<Embarcacion> embarcaciones = embarcacionRepo.findAll();
         e.totalEmbarcaciones = embarcaciones.size();
 
-        // cantidad embarcaciones por cliente (en tu modelo actual: 0 o 1)
+        // Embarcaciones por cliente (aprox dueño principal según UsuarioEmbarcacion)
         Map<Long, Long> porCliente = embarcaciones.stream()
-                .filter(em -> em.getFechaAlta() != null)
                 .collect(Collectors.groupingBy(
-                        em -> {
-                            // en tu modelo Cliente tiene 1:1 con Embarcacion
-                            // usamos el Cliente a través de Cuota para algo más realista, pero acá asumimos
-                            // que el dueño principal está ligado por Cliente.embarcacion
-                            return em.getUsuarios().stream()
-                                    .findFirst()
-                                    .map(ue -> ue.getUsuario().getIdUsuario())
-                                    .orElse(null);
-                        },
+                        em -> em.getUsuarios().stream()
+                                .findFirst()
+                                .map(ue -> ue.getUsuario().getIdUsuario())
+                                .orElse(null),
                         Collectors.counting()
                 ));
         porCliente.remove(null);
         e.embarcacionesPorCliente = porCliente;
 
-        // ocupación por mes: contamos embarcaciones activas (fechaAlta <= finMes y fechaBaja null o > finMes)
+        // Ocupación por mes: cantidad de embarcaciones activas
         Map<YearMonth, Long> ocupacion = new HashMap<>();
         YearMonth ymDesde = YearMonth.from(desde);
         YearMonth ymHasta = YearMonth.from(hasta);
@@ -294,7 +287,7 @@ public class AnalyticsService {
         }
         e.ocupacionPorMes = ocupacion;
 
-        // demanda por tipo de cama
+        // Demanda por tipo de cama (TipoCama en Embarcacion)
         Map<String, Long> demandaPorTipoCama = embarcaciones.stream()
                 .filter(em -> em.getTipoCama() != null)
                 .collect(Collectors.groupingBy(
@@ -303,7 +296,6 @@ public class AnalyticsService {
                 ));
         e.demandaPorTipoCama = demandaPorTipoCama;
 
-        // meses mayor demanda
         long max = ocupacion.values().stream().mapToLong(Long::longValue).max().orElse(0L);
         e.mesesMayorDemanda = ocupacion.entrySet().stream()
                 .filter(en -> en.getValue() == max && max > 0)
@@ -315,7 +307,7 @@ public class AnalyticsService {
     }
 
     // ============================================================
-    // 3. TURNOS (usamos Turno + Tarea)
+    // C. TURNOS (Turno + Tarea)
     // ============================================================
     private TurnosReportDTO buildTurnosReport(LocalDate desde, LocalDate hasta) {
         TurnosReportDTO t = new TurnosReportDTO();
@@ -332,7 +324,7 @@ public class AnalyticsService {
                 ));
         t.turnosPorDia = turnosPorDia;
 
-        // Turnos por tipo (lo interpretamos desde Tarea.tipoTarea)
+        // Turnos por tipo (desde Tarea.tipoTarea)
         Map<String, Long> porTipo = tareas.stream()
                 .filter(ta -> ta.getTipoTarea() != null)
                 .filter(ta -> !ta.getFecha().isBefore(desde) && !ta.getFecha().isAfter(hasta))
@@ -342,7 +334,7 @@ public class AnalyticsService {
                 ));
         t.turnosPorTipo = porTipo;
 
-        // totales mes actual vs anterior
+        // Totales mes actual vs anterior
         LocalDate hoy = LocalDate.now();
         YearMonth ymActual = YearMonth.from(hoy);
         YearMonth ymAnterior = ymActual.minusMonths(1);
@@ -359,10 +351,11 @@ public class AnalyticsService {
         if (totalMesAnterior == 0) {
             t.variacionPorcentual = 0;
         } else {
-            t.variacionPorcentual = ((double) (totalMesActual - totalMesAnterior) / totalMesAnterior) * 100.0;
+            t.variacionPorcentual =
+                    ((double) (totalMesActual - totalMesAnterior) / totalMesAnterior) * 100.0;
         }
 
-        // días con mayor actividad
+        // Días con mayor actividad
         long max = turnosPorDia.values().stream().mapToLong(Long::longValue).max().orElse(0L);
         t.diasMayorActividad = turnosPorDia.entrySet().stream()
                 .filter(en -> en.getValue() == max && max > 0)
@@ -370,7 +363,7 @@ public class AnalyticsService {
                 .sorted()
                 .collect(Collectors.toList());
 
-        // cancelaciones: usamos Tarea.estado = cancelado
+        // Cancelaciones (usamos Tarea.estado = cancelado)
         long tareasCanceladas = tareas.stream()
                 .filter(ta -> ta.getEstado() == EstadoTarea.cancelado)
                 .count();
@@ -378,7 +371,7 @@ public class AnalyticsService {
         t.turnosCancelados = tareasCanceladas;
         t.tasaCancelacion = tareasTotales == 0 ? 0 : (double) tareasCanceladas / tareasTotales;
 
-        // demanda por franja horaria (ejemplo simple: 08-10, 10-12, 12-14, 14-16)
+        // Demanda por franja horaria (ejemplo básico)
         Map<String, Long> demandaPorFranja = new HashMap<>();
         String[] franjas = { "08-10", "10-12", "12-14", "14-16", "16-18", "18-20" };
 
@@ -391,9 +384,9 @@ public class AnalyticsService {
 
             long count = tareas.stream()
                     .filter(ta -> !ta.getFecha().isBefore(desde) && !ta.getFecha().isAfter(hasta))
-                    .filter(ta -> ta.getHora() != null &&
-                            !ta.getHora().isBefore(desdeH) &&
-                            ta.getHora().isBefore(hastaH))
+                    .filter(ta -> ta.getHora() != null
+                               && !ta.getHora().isBefore(desdeH)
+                               && ta.getHora().isBefore(hastaH))
                     .count();
             demandaPorFranja.put(franja, count);
         }
@@ -403,14 +396,14 @@ public class AnalyticsService {
     }
 
     // ============================================================
-    // 5. ECONÓMICO / CUOTAS
+    // E. ECONÓMICO / CUOTAS
     // ============================================================
     private EconomicoReportDTO buildEconomicoReport(LocalDate desde, LocalDate hasta) {
         EconomicoReportDTO e = new EconomicoReportDTO();
 
         List<Cuota> cuotas = cuotaRepo.findAll();
 
-        // ingresos por mes (solo pagadas, usando fechaPago)
+        // Ingresos por mes (pagadas)
         Map<YearMonth, BigDecimal> ingresosPorMes = cuotas.stream()
                 .filter(q -> q.getEstadoCuota() == EstadoCuota.pagada)
                 .filter(q -> q.getFechaPago() != null)
@@ -422,7 +415,7 @@ public class AnalyticsService {
                 ));
         e.ingresosPorMes = ingresosPorMes;
 
-        // comparativo trimestral (simple: agrupamos por "YYYY-Qx")
+        // Ingresos por trimestre
         Map<String, BigDecimal> ingresosTrimestrales = new HashMap<>();
         ingresosPorMes.forEach((ym, monto) -> {
             int trimestre = (ym.getMonthValue() - 1) / 3 + 1;
@@ -431,7 +424,7 @@ public class AnalyticsService {
         });
         e.ingresosTrimestrales = ingresosTrimestrales;
 
-        // proyección de ingresos (ejemplo simple: promedio de últimos 3 meses * 12/periodos)
+        // Proyección simple (promedio últimos 3 meses)
         List<BigDecimal> ultimosMontos = ingresosPorMes.entrySet().stream()
                 .sorted(Map.Entry.<YearMonth, BigDecimal>comparingByKey().reversed())
                 .limit(3)
@@ -440,38 +433,47 @@ public class AnalyticsService {
         if (ultimosMontos.isEmpty()) {
             e.proyeccionIngresos = BigDecimal.ZERO;
         } else {
-            BigDecimal suma = ultimosMontos.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal promedio = suma.divide(BigDecimal.valueOf(ultimosMontos.size()), BigDecimal.ROUND_HALF_UP);
-            e.proyeccionIngresos = promedio; // si querés lo multiplicás por 12 para anual
+            BigDecimal suma = ultimosMontos.stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal promedio = suma.divide(
+                    BigDecimal.valueOf(ultimosMontos.size()),
+                    BigDecimal.ROUND_HALF_UP
+            );
+            e.proyeccionIngresos = promedio;
         }
 
-        // morosidad
         e.cuotasGeneradas = cuotas.size();
-        e.cuotasPagadas = cuotas.stream().filter(q -> q.getEstadoCuota() == EstadoCuota.pagada).count();
-        e.tasaPago = e.cuotasGeneradas == 0 ? 0.0 : (double) e.cuotasPagadas / e.cuotasGeneradas;
+        e.cuotasPagadas = cuotas.stream()
+                .filter(q -> q.getEstadoCuota() == EstadoCuota.pagada)
+                .count();
+        e.tasaPago = e.cuotasGeneradas == 0
+                ? 0.0
+                : (double) e.cuotasPagadas / e.cuotasGeneradas;
 
         long cuotasImpagas = cuotas.stream()
-                .filter(q -> q.getEstadoCuota() == EstadoCuota.pendiente || q.getEstadoCuota() == EstadoCuota.vencida)
+                .filter(q -> q.getEstadoCuota() == EstadoCuota.pendiente
+                          || q.getEstadoCuota() == EstadoCuota.vencida)
                 .count();
-        e.porcentajeMorosidad = e.cuotasGeneradas == 0 ? 0.0 : (double) cuotasImpagas / e.cuotasGeneradas * 100.0;
+        e.porcentajeMorosidad = e.cuotasGeneradas == 0
+                ? 0.0
+                : (double) cuotasImpagas / e.cuotasGeneradas * 100.0;
 
         return e;
     }
 
     // ============================================================
-    // 6. CALENDARIO / CONFIG
+    // F. CALENDARIO
     // ============================================================
     private CalendarioReportDTO buildCalendarioReport(LocalDate desde, LocalDate hasta) {
         CalendarioReportDTO c = new CalendarioReportDTO();
 
-        // días habilitados vs cerrados -> combinamos HorarioOperacion por díaSemana + CierreExcepcional
-        Map<LocalDate, Boolean> diaHabilitado = new HashMap<>();
         Map<LocalDate, Long> turnosPorDia = turnoRepo.findAll().stream()
                 .filter(t -> !t.getFecha().isBefore(desde) && !t.getFecha().isAfter(hasta))
                 .collect(Collectors.groupingBy(
                         Turno::getFecha,
                         Collectors.counting()
                 ));
+        c.turnosPorDia = turnosPorDia;
 
         List<CierreExcepcional> cierres = cierreRepo.findByFechaBetween(desde, hasta);
         Map<LocalDate, Boolean> mapaCierres = cierres.stream()
@@ -480,58 +482,58 @@ public class AnalyticsService {
                         CierreExcepcional::getAbierto
                 ));
 
+        Map<LocalDate, Boolean> diaHabilitado = new HashMap<>();
+        Map<LocalDate, Double> horasEfectivasPorDia = new HashMap<>();
+
         LocalDate f = desde;
         while (!f.isAfter(hasta)) {
-            Boolean abierto = mapaCierres.get(f);
-            if (abierto == null) {
-                // usamos HorarioOperacion por díaSemana
-                int diaSemana = f.getDayOfWeek().getValue(); // 1..7
-                boolean abiertoDefault = horarioRepo.findByDiaSemana(diaSemana)
+            Boolean overrideAbierto = mapaCierres.get(f);
+            boolean abierto;
+            if (overrideAbierto != null) {
+                abierto = overrideAbierto;
+            } else {
+                int diaSemana = f.getDayOfWeek().getValue();
+                abierto = horarioRepo.findByDiaSemana(diaSemana)
                         .map(HorarioOperacion::getAbierto)
                         .orElse(Boolean.FALSE);
-                diaHabilitado.put(f, abiertoDefault);
-            } else {
-                diaHabilitado.put(f, abierto);
             }
-            f = f.plusDays(1);
-        }
-        c.diaHabilitado = diaHabilitado;
-        c.turnosPorDia = turnosPorDia;
+            diaHabilitado.put(f, abierto);
 
-        // horas efectivas (si tenés bien puestos horarios, podés calcular apertura-cierre)
-        Map<LocalDate, Double> horasEfectivasPorDia = new HashMap<>();
-        f = desde;
-        while (!f.isAfter(hasta)) {
-            Boolean abierto = diaHabilitado.getOrDefault(f, false);
             double horas = 0.0;
-            if (Boolean.TRUE.equals(abierto)) {
+            if (abierto) {
                 int diaSemana = f.getDayOfWeek().getValue();
                 var horarioOpt = horarioRepo.findByDiaSemana(diaSemana);
                 if (horarioOpt.isPresent()) {
                     var h = horarioOpt.get();
                     if (h.getHoraApertura() != null && h.getHoraCierre() != null) {
-                        horas = (h.getHoraCierre().toSecondOfDay() - h.getHoraApertura().toSecondOfDay()) / 3600.0;
+                        horas = (h.getHoraCierre().toSecondOfDay()
+                               - h.getHoraApertura().toSecondOfDay()) / 3600.0;
                     }
                 }
                 // override si hay CierreExcepcional con horas específicas
                 for (CierreExcepcional ce : cierres) {
-                    if (ce.getFecha().equals(f) && Boolean.TRUE.equals(ce.getAbierto())
-                            && ce.getHoraApertura() != null && ce.getHoraCierre() != null) {
-                        horas = (ce.getHoraCierre().toSecondOfDay() - ce.getHoraApertura().toSecondOfDay()) / 3600.0;
+                    if (ce.getFecha().equals(f)
+                            && Boolean.TRUE.equals(ce.getAbierto())
+                            && ce.getHoraApertura() != null
+                            && ce.getHoraCierre() != null) {
+                        horas = (ce.getHoraCierre().toSecondOfDay()
+                               - ce.getHoraApertura().toSecondOfDay()) / 3600.0;
                     }
                 }
             }
             horasEfectivasPorDia.put(f, horas);
+
             f = f.plusDays(1);
         }
+
+        c.diaHabilitado = diaHabilitado;
         c.horasEfectivasPorDia = horasEfectivasPorDia;
 
-        // impacto de días cerrados en cantidad de turnos
+        // Impacto de días cerrados (muy aproximado)
         Map<LocalDate, Long> perdidos = new HashMap<>();
         diaHabilitado.forEach((fecha, abierto) -> {
-            if (Boolean.FALSE.equals(abierto)) {
+            if (!abierto) {
                 long potencial = turnosPorDia.getOrDefault(fecha, 0L);
-                // esto es un placeholder: si tenés lógica de cupo, acá podrías estimar más.
                 perdidos.put(fecha, potencial);
             }
         });
@@ -541,7 +543,7 @@ public class AnalyticsService {
     }
 
     // ============================================================
-    // 7. ANUNCIOS
+    // G. ANUNCIOS
     // ============================================================
     private AnunciosReportDTO buildAnunciosReport(LocalDate desde, LocalDate hasta) {
         AnunciosReportDTO a = new AnunciosReportDTO();
@@ -563,23 +565,23 @@ public class AnalyticsService {
     }
 
     // ============================================================
-    // 8. E-COMMERCE
+    // MINI E-COMMERCE
     // ============================================================
     private EcommerceReportDTO buildEcommerceReport(LocalDate desde, LocalDate hasta) {
         EcommerceReportDTO e = new EcommerceReportDTO();
 
         List<Pedido> pedidos = pedidoRepo.findAll();
 
-        // filtramos por rango
         List<Pedido> pedidosRango = pedidos.stream()
-                .filter(p -> !p.getFechaPedido().isBefore(desde) && !p.getFechaPedido().isAfter(hasta))
+                .filter(p -> !p.getFechaPedido().isBefore(desde)
+                          && !p.getFechaPedido().isAfter(hasta))
                 .toList();
 
-        // ventas totales por día (solo estado "pagado")
         List<Pedido> pedidosPagados = pedidosRango.stream()
                 .filter(p -> "pagado".equalsIgnoreCase(p.getEstado()))
                 .toList();
 
+        // Ventas por día
         Map<LocalDate, BigDecimal> ventasPorDia = pedidosPagados.stream()
                 .collect(Collectors.groupingBy(
                         Pedido::getFechaPedido,
@@ -588,6 +590,7 @@ public class AnalyticsService {
                 ));
         e.ventasPorDia = ventasPorDia;
 
+        // Ventas por mes
         Map<YearMonth, BigDecimal> ventasPorMes = pedidosPagados.stream()
                 .collect(Collectors.groupingBy(
                         p -> YearMonth.from(p.getFechaPedido()),
@@ -601,12 +604,13 @@ public class AnalyticsService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         e.totalPeriodo = totalPeriodo;
 
-        long cantidadPedidosPagados = pedidosPagados.size();
-        e.ticketPromedio = cantidadPedidosPagados == 0
+        long cantPedidosPagados = pedidosPagados.size();
+        e.ticketPromedio = cantPedidosPagados == 0
                 ? BigDecimal.ZERO
-                : totalPeriodo.divide(BigDecimal.valueOf(cantidadPedidosPagados), BigDecimal.ROUND_HALF_UP);
+                : totalPeriodo.divide(BigDecimal.valueOf(cantPedidosPagados),
+                                      BigDecimal.ROUND_HALF_UP);
 
-        // pedidos por estado
+        // Pedidos por estado
         Map<String, Long> pedidosPorEstado = pedidosRango.stream()
                 .collect(Collectors.groupingBy(
                         p -> p.getEstado().toUpperCase(),
@@ -614,7 +618,7 @@ public class AnalyticsService {
                 ));
         e.pedidosPorEstado = pedidosPorEstado;
 
-        // pedidos por mes (todos los estados)
+        // Pedidos por mes (todos los estados)
         Map<YearMonth, Long> pedidosPorMes = pedidosRango.stream()
                 .collect(Collectors.groupingBy(
                         p -> YearMonth.from(p.getFechaPedido()),
@@ -622,7 +626,7 @@ public class AnalyticsService {
                 ));
         e.pedidosPorMes = pedidosPorMes;
 
-        // productos: top, pocas ventas, cancelados
+        // Productos
         List<PedidoProducto> items = pedidoProductoRepo.findAll();
 
         Map<Long, ProductoVentaDTO> statsProducto = new HashMap<>();
@@ -652,7 +656,7 @@ public class AnalyticsService {
                 .limit(10)
                 .collect(Collectors.toList());
 
-        // productos con más cancelaciones (si usás estado "cancelado" en Pedido)
+        // Productos con más cancelaciones (estado "cancelado" en Pedido)
         Map<Long, Long> cancelacionesPorProducto = items.stream()
                 .filter(it -> "cancelado".equalsIgnoreCase(it.getPedido().getEstado()))
                 .collect(Collectors.groupingBy(
@@ -675,7 +679,7 @@ public class AnalyticsService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // clientes que compran vs no
+        // Clientes que compran vs no
         Set<Long> clientesQueCompranSet = pedidos.stream()
                 .map(p -> p.getCliente().getIdUsuario())
                 .collect(Collectors.toSet());
@@ -683,7 +687,7 @@ public class AnalyticsService {
         e.clientesQueCompran = clientesQueCompranSet.size();
         e.clientesQueNoCompran = totalClientes - e.clientesQueCompran;
 
-        // ranking clientes por gasto
+        // Ranking clientes por gasto
         Map<Long, BigDecimal> gastoPorCliente = pedidosPagados.stream()
                 .collect(Collectors.groupingBy(
                         p -> p.getCliente().getIdUsuario(),
@@ -704,7 +708,7 @@ public class AnalyticsService {
                 })
                 .collect(Collectors.toList());
 
-        // segmentos: solo cuotas / cuotas+tienda / solo tienda
+        // Segmentos: solo cuotas / cuotas+tienda / solo tienda
         Map<String, Long> segmentos = new HashMap<>();
         Set<Long> clientesConCuotas = cuotaRepo.findAll().stream()
                 .map(q -> q.getCliente().getIdUsuario())

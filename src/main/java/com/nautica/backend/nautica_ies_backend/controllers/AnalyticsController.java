@@ -24,7 +24,7 @@ public class AnalyticsController {
 
     /**
      * Dashboard general admin.
-     * Ejemplo de uso:
+     * Ejemplo:
      * GET /api/analytics/admin?desde=2025-01-01&hasta=2025-01-31
      */
     @GetMapping("/admin")
