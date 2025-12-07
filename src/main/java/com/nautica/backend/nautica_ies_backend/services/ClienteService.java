@@ -408,8 +408,8 @@ private ClienteSummary toSummary(Cliente c) {
         c.getDireccion(),
         c.getLocalidad(),
         c.getProvincia(),
-        c.getFechaAlta() == null ? null : c.getFechaAlta().toString(),
-        c.getEmbarcacion() == null ? null : c.getEmbarcacion().getIdEmbarcacion()
+        c.getFechaAlta() == null ? null : c.getFechaAlta().toString()
+        // c.getEmbarcacion() == null ? null : c.getEmbarcacion().getIdEmbarcacion()
     );
     }
 

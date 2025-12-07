@@ -90,20 +90,44 @@ public class CalendarioService {
         return out;
     }
 
-    public void habilitarDia(LocalDate fecha) {
-        var ce = excepcionRepo.findByFecha(fecha).orElseGet(() -> {
-            var n = new CierreExcepcional();
-            n.setFecha(fecha);
-            return n;
-        });
-        ce.setAbierto(true);
-        // horas null => usa horario semanal; si preferís, podés dejar horas para
-        // override
-        ce.setHoraApertura(null);
-        ce.setHoraCierre(null);
-        ce.setMotivo(null);
-        excepcionRepo.save(ce);
+public void habilitarDia(LocalDate fecha) {
+    // Día de la semana (1=Lunes ... 7=Domingo)
+    int dow = mapTo1to7(fecha.getDayOfWeek());
+
+    // Buscamos el horario base para ese día en la tabla de horarios semanales
+    HorarioOperacion base = horarioRepo.findAll().stream()
+            .filter(h -> h.getDiaSemana() == dow)
+            .findFirst()
+            .orElse(null);
+
+    LocalTime apertura;
+    LocalTime cierre;
+
+    if (base != null && Boolean.TRUE.equals(base.getAbierto())) {
+        // usamos las horas estándar configuradas
+        apertura = base.getHoraApertura();
+        cierre = base.getHoraCierre();
+    } else {
+        // fallback: 08–18 o 09–17 sábado
+        boolean esSabado = dow == DayOfWeek.SATURDAY.getValue();
+        apertura = esSabado ? LocalTime.of(9, 0) : LocalTime.of(8, 0);
+        cierre = esSabado ? LocalTime.of(17, 0) : LocalTime.of(18, 0);
     }
+
+    var ce = excepcionRepo.findByFecha(fecha).orElseGet(() -> {
+        var n = new CierreExcepcional();
+        n.setFecha(fecha);
+        return n;
+    });
+
+    ce.setAbierto(true);
+    ce.setHoraApertura(apertura);
+    ce.setHoraCierre(cierre);
+    ce.setMotivo(null);
+
+    excepcionRepo.save(ce);
+}
+
 
     public void deshabilitarDia(LocalDate fecha, String motivo) {
         var ce = excepcionRepo.findByFecha(fecha).orElseGet(() -> {
