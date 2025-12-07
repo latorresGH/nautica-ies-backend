@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+//import para hstorial de pagos
 import com.nautica.backend.nautica_ies_backend.models.*;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
 import com.nautica.backend.nautica_ies_backend.models.enums.FormaPago;
@@ -19,9 +20,9 @@ import com.nautica.backend.nautica_ies_backend.repository.*;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaAdminDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoCuotasRequest;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoHistorialDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.DetalleCuotaEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
-
 @Service
 public class CuotaService {
 
@@ -384,4 +385,32 @@ public class CuotaService {
 
         repo.saveAll(cuotas);
     }
+
+    @Transactional(readOnly = true)
+public java.util.List<PagoHistorialDTO> historialPagosPorCliente(Long idCliente) {
+
+    // Reutilizamos la query existente buscarPagos():
+    var page = repo.buscarPagos(
+            idCliente,   // clienteId
+            null,        // desde
+            null,        // hasta
+            null,        // medio de pago
+            Pageable.unpaged()
+    );
+
+    return page.getContent().stream()
+            .map(c -> new PagoHistorialDTO(
+                    c.getIdCuota(),
+                    c.getPeriodo(),
+                    c.getNumeroMes(),              // LocalDate del mes
+                    c.getFechaPago(),
+                    c.getMonto(),
+                    c.getEmbarcacion() != null ? c.getEmbarcacion().getIdEmbarcacion() : null,
+                    c.getEmbarcacion() != null ? c.getEmbarcacion().getNombre() : null,
+                    c.getEmbarcacion() != null ? c.getEmbarcacion().getNumMatricula() : null,
+                    c.getFormaPago() != null ? c.getFormaPago().name() : null
+            ))
+            .toList();
+}
+
 }
