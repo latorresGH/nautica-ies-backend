@@ -13,6 +13,6 @@ public record ClienteDetail(
         String direccion,
         String localidad,
         String provincia,
-        String fechaAlta,          // ISO yyyy-MM-dd
-        Long idEmbarcacion
+        String fechaAlta          // ISO yyyy-MM-dd
+        // Long idEmbarcacion
 ) {}

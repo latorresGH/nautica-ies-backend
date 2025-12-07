@@ -36,11 +36,7 @@ public class Cliente extends Usuario {
     /**
      * Relación 1:1 con Embarcacion (dueño de la FK).
      */
-    @OneToOne
-    @JoinColumn(name = "id_embarcacion", unique = true)
-    private Embarcacion embarcacion;
-    
-
+   
     public Integer getNumCliente() {
         return numCliente;
     }
@@ -64,13 +60,5 @@ public class Cliente extends Usuario {
 
     public void setFechaAlta(LocalDate fechaAlta) {
         this.fechaAlta = fechaAlta;
-    }
-
-    public Embarcacion getEmbarcacion() {
-        return embarcacion;
-    }
-
-    public void setEmbarcacion(Embarcacion embarcacion) {
-        this.embarcacion = embarcacion;
     }
 }
