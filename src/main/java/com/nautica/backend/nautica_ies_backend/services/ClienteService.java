@@ -46,6 +46,7 @@ import com.nautica.backend.nautica_ies_backend.models.enums.TipoCliente;
 import org.springframework.security.crypto.password.PasswordEncoder;
     
 
+
 /**
  * Servicio encargado de la lógica de negocio relacionada con {@link Cliente}.
  * Mantiene los métodos existentes (listar/crear/obtener/actualizar/eliminar)
@@ -504,56 +505,48 @@ public void bajaDefinitivaSiSinDeuda(Long id) {
     public Page<ClienteAdminResumenDTO> listarAdminResumen(String buscar, Pageable pageable) {
     Page<ClienteSummary> base = listarAdmin(buscar, pageable);
 
-        return base.map(c -> {
-            // 1) relaciones usuario-embarcación para este cliente
-            List<UsuarioEmbarcacion> relaciones = usuarioEmbarcacionService.listarPorUsuario(c.id());
+    // estados que consideramos como deuda
+    var estadosDeuda = java.util.List.of(EstadoCuota.pendiente, EstadoCuota.vencida);
 
-            // 2) mapear embarcaciones a DTO admin (id, nombre, matrícula)
-            List<EmbarcacionAdminDTO> embarcaciones = relaciones.stream()
-                    .map(rel -> {
-                        Embarcacion e = rel.getEmbarcacion();
-                        return new EmbarcacionAdminDTO(
-                                e.getIdEmbarcacion(),
-                                e.getNombre(),
-                                e.getNumMatricula() 
-                        );
-                    })
-                    .toList();
+    return base.map(c -> {
+        // 1) relaciones usuario-embarcación para este cliente
+        List<UsuarioEmbarcacion> relaciones = usuarioEmbarcacionService.listarPorUsuario(c.id());
 
-            // 3) calcular si tiene deuda en alguna embarcación
-            boolean conDeuda = false;
+        // 2) mapear embarcaciones a DTO admin (id, nombre, matrícula)
+        List<EmbarcacionAdminDTO> embarcaciones = relaciones.stream()
+                .map(rel -> {
+                    Embarcacion e = rel.getEmbarcacion();
+                    return new EmbarcacionAdminDTO(
+                            e.getIdEmbarcacion(),
+                            e.getNombre(),
+                            e.getNumMatricula()
+                    );
+                })
+                .toList();
 
-            for (EmbarcacionAdminDTO eDto : embarcaciones) {
-                CuotaResumen cuota = cuotaService.cuotaActualPorClienteYEmbarcacion(
-                        c.id(),
-                        eDto.id()
-                );
+        // 3) calcular deuda mirando TODAS las cuotas del cliente
+        long cuotasAdeudadas =
+                cuotaRepo.countByCliente_IdUsuarioAndEstadoCuotaIn(c.id(), estadosDeuda);
 
-                if (cuota != null && !"PAGADA".equalsIgnoreCase(cuota.estado())) {
-                    conDeuda = true;
-                    break;
-                }
-            }
+        String estadoCuotas = (cuotasAdeudadas > 0) ? "CON_DEUDA" : "AL_DIA";
 
-            String estadoCuotas = conDeuda ? "CON_DEUDA" : "AL_DIA";
+        // 4) estado real del usuario en tabla usuarios
+        boolean activoUsuario = usuarioRepo.findById(c.id())
+                .map(u -> Boolean.TRUE.equals(u.getActivo()))
+                .orElse(false);
 
-            // Buscar el usuario para leer el estado real de la tabla usuarios
-            boolean activoUsuario = usuarioRepo.findById(c.id())
-                    .map(u -> Boolean.TRUE.equals(u.getActivo()))
-                    .orElse(false);
+        return new ClienteAdminResumenDTO(
+                c.id(),
+                c.nombre(),
+                c.apellido(),
+                c.telefono(),
+                activoUsuario,
+                embarcaciones,
+                estadoCuotas
+        );
+    });
+}
 
-            return new ClienteAdminResumenDTO(
-                    c.id(),
-                    c.nombre(),
-                    c.apellido(),
-                    c.telefono(),
-                    activoUsuario,
-                    embarcaciones,
-                    estadoCuotas
-            );
-
-        });
-    }
 
         @Transactional(readOnly = true)
     public ClienteInfoAdminDTO obtenerInfoAdmin(Long idCliente) {
@@ -754,5 +747,32 @@ public void bajaDefinitivaSiSinDeuda(Long id) {
     }
 
 
+
+    /*@Transactional(readOnly = true)
+    public java.util.List<PagoHistorialDTO> historialPagosPorCliente(Long idCliente) {
+
+        // Reutilizamos la query existente buscarPagos():
+        var page = cuotaRepo.buscarPagos(
+                idCliente,   // clienteId
+                null,        // desde
+                null,        // hasta
+                null,        // medio de pago
+                Pageable.unpaged()
+        );
+
+        return page.getContent().stream()
+                .map(c -> new PagoHistorialDTO(
+                        c.getIdCuota(),
+                        c.getPeriodo(),
+                        c.getNumeroMes(),              // LocalDate del mes
+                        c.getFechaPago(),
+                        c.getMonto(),
+                        c.getEmbarcacion() != null ? c.getEmbarcacion().getIdEmbarcacion() : null,
+                        c.getEmbarcacion() != null ? c.getEmbarcacion().getNombre() : null,
+                        c.getEmbarcacion() != null ? c.getEmbarcacion().getNumMatricula() : null,
+                        c.getFormaPago() != null ? c.getFormaPago().name() : null
+                ))
+                .toList();
+    }*/
 
 }

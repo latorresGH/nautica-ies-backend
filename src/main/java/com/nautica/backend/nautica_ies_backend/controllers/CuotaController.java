@@ -12,11 +12,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaResumen;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.CuotaAdminDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoCuotasRequest;
-
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoHistorialDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
 import com.nautica.backend.nautica_ies_backend.models.Cuota;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService;
 import com.nautica.backend.nautica_ies_backend.services.CuotaService.DeudaCliente;
+
 
 
 
@@ -135,6 +136,18 @@ public class CuotaController {
     @GetMapping("/admin/{clienteId}/impagas")
     public ResponseEntity<List<CuotaAdminDTO>> cuotasImpagasAdmin(@PathVariable Long clienteId) {
         return ResponseEntity.ok(service.listarCuotasImpagasPorCliente(clienteId));
+    }
+
+        /**
+     * Historial de pagos (ADMIN) de un cliente.
+     *
+     * GET /api/cuotas/admin/{clienteId}/pagos
+     */
+    @GetMapping("/admin/{clienteId}/pagos")
+    public ResponseEntity<java.util.List<PagoHistorialDTO>> historialPagosCliente(
+            @PathVariable Long clienteId) {
+
+        return ResponseEntity.ok(service.historialPagosPorCliente(clienteId));
     }
 
 

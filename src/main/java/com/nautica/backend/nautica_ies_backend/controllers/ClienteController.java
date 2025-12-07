@@ -156,10 +156,12 @@ public class ClienteController {
     }
 
     @PatchMapping("/admin/{id}/reactivar")
-    public ResponseEntity<Void> reactivar(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> reactivar(@PathVariable Long id) {
         service.reactivarCliente(id);
-        return ResponseEntity.noContent().build();
+        // Devolvemos un pequeño JSON para que el front pueda hacer res.json() sin romperse
+        return ResponseEntity.ok(Map.of("status", "ok"));
     }
+
 
 
     /**
