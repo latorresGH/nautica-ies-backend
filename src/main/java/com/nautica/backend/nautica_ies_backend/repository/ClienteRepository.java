@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
@@ -48,4 +49,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     // siguiente número de cliente (max + 1)
     @Query("select coalesce(max(c.numCliente), 0) + 1 from Cliente c")
     Integer siguienteNumeroCliente();
+
+    List<Cliente> findByTipoCliente(String tipoCliente);
 }

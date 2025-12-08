@@ -52,16 +52,17 @@ public class UsuarioController {
 
     private final UsuarioService service;
         private final ClienteService clienteService;  // Usamos ClienteService porque estás buscando el usuario por correo
-
+private final ClienteRepository clienteRepo;
 
     /**
      * Constructor que inyecta el servicio de usuarios.
      *
      * @param service Servicio encargado de la lógica de negocio para usuarios.
      */
-    public UsuarioController(UsuarioService service, ClienteService clienteService) {
+    public UsuarioController(UsuarioService service, ClienteService clienteService, ClienteRepository clienteRepo) {
         this.service = service;
         this.clienteService = clienteService;
+        this.clienteRepo = clienteRepo;
     }
 
     /**
@@ -134,16 +135,29 @@ public class UsuarioController {
 
 @GetMapping("/ids-por-correo")
 public ResponseEntity<Map<String, Object>> obtenerIdsPorCorreo(@RequestParam String correo) {
-    // Utilizamos el ClienteService o UsuarioService para buscar el usuario
-    Usuario usuario = clienteService.buscarPorCorreo(correo); // Llamamos al método de búsqueda en el servicio
+    // Este método ya te devuelve el Usuario (tabla usuarios)
+    Usuario usuario = clienteService.buscarPorCorreo(correo);
 
-    // Mapear la respuesta con los IDs
     Map<String, Object> response = new HashMap<>();
     response.put("idUsuario", usuario.getIdUsuario());
-    // Aquí puedes agregar más información si necesitas
 
-    return ResponseEntity.ok(response);  // Devolvemos el ID del usuario
+    // 🔹 Buscar el Cliente hijo (Cliente extiende Usuario con PK compartida)
+    Cliente cliente = clienteRepo.findById(usuario.getIdUsuario()).orElse(null);
+
+    if (cliente != null) {
+        // En tu esquema, el PK de cliente es id_cliente que referencia a usuarios.id_usuario.
+        // Según tu mapeo JPA seguramente sea el mismo ID (getIdUsuario heredado).
+        response.put("clienteId", cliente.getIdUsuario());  // o getIdCliente() si lo tenés
+        // si tipoCliente es String, tal cual; si es enum, usar name()
+        response.put("tipoCliente", cliente.getTipoCliente()); 
+    } else {
+        response.put("clienteId", null);
+        response.put("tipoCliente", null);
+    }
+
+    return ResponseEntity.ok(response);
 }
+
 
 
 

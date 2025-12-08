@@ -76,6 +76,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
 
         long countByFechaAndHoraInicio(LocalDate fecha, LocalTime horaInicio);
 
-  
+  List<Turno> findByFechaAndEmbarcacion_IdEmbarcacion(LocalDate fecha, Long idEmbarcacion);
+
 
 }

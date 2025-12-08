@@ -97,15 +97,42 @@ public Turno crear(Turno turno) {
       throw new IllegalArgumentException("TURNOS_HORA_POSTERIOR");
   }
 
-  private void verificarSolapamiento(Long idTurnoExcluido,
-      LocalDate fecha,
-      LocalTime inicio,
-      LocalTime fin,
-      Long idEmbarcacion) {
-    boolean overlap = turnoRepo.existsOverlap(fecha, inicio, fin, idEmbarcacion, idTurnoExcluido);
-    if (overlap)
-          throw new IllegalStateException("TURNOS_EMBARCACION_SOLAPADOS");
-  }
+private void verificarSolapamiento(
+    Long idTurnoExcluido,
+    LocalDate fecha,
+    LocalTime inicio,
+    LocalTime fin,
+    Long idEmbarcacion
+) {
+    // Solo turnos de esa embarcación y ese día
+    List<Turno> turnos =
+        turnoRepo.findByFechaAndEmbarcacion_IdEmbarcacion(fecha, idEmbarcacion);
+
+    for (Turno t : turnos) {
+
+        // si estoy editando un turno, lo excluyo
+        if (idTurnoExcluido != null && t.getIdTurno().equals(idTurnoExcluido)) {
+            continue;
+        }
+
+        // 👇 Buscar la tarea asociada y saltar las canceladas
+        var tareaOpt = tareaRepo.findByTurno_Id(t.getIdTurno());
+        if (tareaOpt.isPresent() && tareaOpt.get().getEstado() == EstadoTarea.cancelado) {
+            continue; // no bloquea nada
+        }
+
+        LocalTime iniExist = t.getHoraInicio();
+        LocalTime finExistConBuffer = t.getHoraFin().plusHours(1); // buffer de 1 hora
+
+        boolean seSolapan = inicio.isBefore(finExistConBuffer) && fin.isAfter(iniExist);
+
+        if (seSolapan) {
+            throw new IllegalStateException("TURNOS_EMBARCACION_SOLAPADOS");
+        }
+    }
+}
+
+
 
   /*
    * =====================================================
