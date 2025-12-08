@@ -514,21 +514,38 @@ public void bajaDefinitivaSiSinDeuda(Long id) {
 
         // 2) mapear embarcaciones a DTO admin (id, nombre, matrícula)
         List<EmbarcacionAdminDTO> embarcaciones = relaciones.stream()
-                .map(rel -> {
-                    Embarcacion e = rel.getEmbarcacion();
-                    return new EmbarcacionAdminDTO(
-                            e.getIdEmbarcacion(),
-                            e.getNombre(),
-                            e.getNumMatricula()
-                    );
-                })
-                .toList();
+        .map(rel -> {
+            Embarcacion e = rel.getEmbarcacion();
+            return new EmbarcacionAdminDTO(
+                    e.getIdEmbarcacion(),
+                    e.getNombre(),
+                    e.getNumMatricula(),
+                    c.id()  
+            );
+        })
+        .toList();
 
-        // 3) calcular deuda mirando TODAS las cuotas del cliente
-        long cuotasAdeudadas =
-                cuotaRepo.countByCliente_IdUsuarioAndEstadoCuotaIn(c.id(), estadosDeuda);
 
-        String estadoCuotas = (cuotasAdeudadas > 0) ? "CON_DEUDA" : "AL_DIA";
+        // 3) determinar estado de cuotas
+        String estadoCuotas;
+
+        // 🔍 Buscar cliente real para saber si es autorizado o propietario
+        TipoCliente tipoEnum = repo.findById(c.id())
+                .map(Cliente::getTipoCliente)            // Optional<TipoCliente>
+                .orElse(TipoCliente.propietario);        // valor por defecto
+
+        if (tipoEnum == TipoCliente.autorizado) {
+            // para los autorizados mostramos un estado especial
+            estadoCuotas = "AUTORIZADO";
+        } else {
+            long cuotasAdeudadas =
+                    cuotaRepo.countByCliente_IdUsuarioAndEstadoCuotaIn(c.id(), estadosDeuda);
+
+            estadoCuotas = (cuotasAdeudadas > 0) ? "CON_DEUDA" : "AL_DIA";
+        }
+
+
+
 
         // 4) estado real del usuario en tabla usuarios
         boolean activoUsuario = usuarioRepo.findById(c.id())
@@ -641,57 +658,63 @@ public void bajaDefinitivaSiSinDeuda(Long id) {
      * TODO: ajustá nombres de enums y lógica de password/rol según tu modelo real.
      */
     @Transactional
-    public ClienteDetail altaCompleta(ClienteAltaRequest req) {
+public ClienteDetail altaCompleta(ClienteAltaRequest req) {
 
-        // 1) Crear el CLIENTE (hereda de Usuario)
-        Cliente cliente = new Cliente();
-        cliente.setNombre(req.nombre().trim());
-        cliente.setApellido(req.apellido().trim());
-        cliente.setCorreo(req.correo() != null ? req.correo().trim().toLowerCase() : null);
-        cliente.setTelefono(req.telefono());
-        cliente.setDni(req.dni());
-        cliente.setDireccion(req.direccion());
-        cliente.setLocalidad(req.localidad());
-        cliente.setProvincia(req.provincia());
+    // 1) Crear el CLIENTE (hereda de Usuario)
+    Cliente cliente = new Cliente();
+    cliente.setNombre(req.nombre().trim());
+    cliente.setApellido(req.apellido().trim());
+    cliente.setCorreo(req.correo() != null ? req.correo().trim().toLowerCase() : null);
+    cliente.setTelefono(req.telefono());
+    cliente.setDni(req.dni());
+    cliente.setDireccion(req.direccion());
+    cliente.setLocalidad(req.localidad());
+    cliente.setProvincia(req.provincia());
 
-        // Rol del usuario
-        cliente.setRol(RolUsuario.cliente);
-        cliente.setActivo(true);
+    // Rol del usuario
+    cliente.setRol(RolUsuario.cliente);
+    cliente.setActivo(true);
 
-        // Contraseña temporal
-        String rawPassword;
-        if (req.dni() != null && !req.dni().isBlank()) {
-            rawPassword = req.dni().trim();   // por ahora: DNI como contraseña inicial
-        } else {
-            rawPassword = "123456";
+    // Contraseña temporal
+    String rawPassword;
+    if (req.dni() != null && !req.dni().isBlank()) {
+        rawPassword = req.dni().trim();   // por ahora: DNI como contraseña inicial
+    } else {
+        rawPassword = "123456";
+    }
+
+    // 2) guardar ENCRIPTADA
+    cliente.setContrasena(passwordEncoder.encode(rawPassword));
+
+    // Tipo de cliente
+    TipoCliente tipoClienteEnum = null;
+    if (req.tipoCliente() != null && !req.tipoCliente().isBlank()) {
+        try {
+            tipoClienteEnum = TipoCliente.valueOf(req.tipoCliente());
+            cliente.setTipoCliente(tipoClienteEnum);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Tipo de cliente inválido: " + req.tipoCliente()
+            );
         }
+    }
 
-        // 2) guardar ENCRIPTADA
-        cliente.setContrasena(passwordEncoder.encode(rawPassword));
+    // Fecha de alta = hoy
+    cliente.setFechaAlta(java.time.LocalDate.now());
 
-        // Tipo de cliente
-        if (req.tipoCliente() != null && !req.tipoCliente().isBlank()) {
-            try {
-                TipoCliente tipo = TipoCliente.valueOf(req.tipoCliente());
-                cliente.setTipoCliente(tipo);
-            } catch (IllegalArgumentException e) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Tipo de cliente inválido: " + req.tipoCliente()
-                );
-            }
-        }
+    // Generar número de cliente automáticamente
+    Integer numeroCliente = repo.siguienteNumeroCliente();
+    cliente.setNumCliente(numeroCliente);
 
-        // Fecha de alta = hoy
-        cliente.setFechaAlta(java.time.LocalDate.now());
+    // Guardar cliente (una sola vez)
+    cliente = repo.save(cliente);
 
-        // Generar número de cliente automáticamente
-        Integer numeroCliente = repo.siguienteNumeroCliente();
-        cliente.setNumCliente(numeroCliente);
-
-        // Guardar cliente (una sola vez)
-        cliente = repo.save(cliente);
-
+    // ============================================================
+    //  RAMA A: CLIENTE PROPIETARIO (o sin tipo -> default propietario)
+    // ============================================================
+    boolean esAutorizado = (tipoClienteEnum == TipoCliente.autorizado);
+    if (!esAutorizado) {
         // 2) Crear las EMBARCACIONES y asociarlas al cliente como propietario
         if (req.embarcaciones() != null) {
             for (EmbarcacionAltaRequest eReq : req.embarcaciones()) {
@@ -737,14 +760,44 @@ public void bajaDefinitivaSiSinDeuda(Long id) {
             }
         }
 
-        // 3) AUTORIZADOS – no se utiliza en este mvp
-        if (req.autorizados() != null && !req.autorizados().isEmpty()) {
-            
+        // Por ahora seguimos ignorando req.autorizados()
+        // (el diseño nuevo usa clientes "autorizados" como usuarios propios)
+
+    } else {
+        // ============================================================
+        //  RAMA B: CLIENTE AUTORIZADO SOBRE EMBARCACIONES EXISTENTES
+        // ============================================================
+        var ids = req.embarcacionesIdsAutorizado();
+        if (ids == null || ids.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debe seleccionar al menos una embarcación para el cliente autorizado."
+            );
         }
 
-        // 4) Devolver el detalle del cliente creado
-        return toDetail(cliente);
+        for (Long embId : ids) {
+            if (embId == null) continue;
+
+            Embarcacion emb = embarcacionRepo.findById(embId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Embarcación no encontrada con id: " + embId
+                    ));
+
+            UsuarioEmbarcacion ue = new UsuarioEmbarcacion();
+            ue.setUsuario(cliente);
+            ue.setEmbarcacion(emb);
+            ue.setRolEnEmbarcacion(RolEnEmbarcacion.autorizado);
+            ue.setDesde(java.time.LocalDate.now());
+
+            ueRepo.save(ue);
+        }
     }
+
+    // 4) Devolver el detalle del cliente creado
+    return toDetail(cliente);
+}
+
 
 
 

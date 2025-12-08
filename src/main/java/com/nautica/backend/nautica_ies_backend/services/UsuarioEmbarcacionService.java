@@ -3,12 +3,13 @@ package com.nautica.backend.nautica_ies_backend.services;
 
 import java.time.LocalDate;
 import java.util.List;
-
+import java.util.Objects;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nautica.backend.nautica_ies_backend.config.ResourceNotFoundException;
+import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Resumen.EmbarcacionAdminDTO;
 import com.nautica.backend.nautica_ies_backend.models.Embarcacion;
 import com.nautica.backend.nautica_ies_backend.models.Usuario;
 import com.nautica.backend.nautica_ies_backend.models.UsuarioEmbarcacion;
@@ -113,5 +114,26 @@ public class UsuarioEmbarcacionService {
         if (!repo.existsById(id))
             throw new ResourceNotFoundException("Relación no encontrada");
         repo.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmbarcacionAdminDTO> listarEmbarcacionesAdmin() {
+        var relaciones = repo.findByRolEnEmbarcacionAndHastaIsNull(RolEnEmbarcacion.propietario);
+
+        return relaciones.stream()
+                .map(ue -> {
+                    var emb = ue.getEmbarcacion();
+                    var usuario = ue.getUsuario();
+                    if (emb == null) return null;
+
+                    return new EmbarcacionAdminDTO(
+                            emb.getIdEmbarcacion(),
+                            emb.getNombre(),
+                            emb.getNumMatricula(),
+                            usuario != null ? usuario.getIdUsuario() : null
+                    );
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 }
