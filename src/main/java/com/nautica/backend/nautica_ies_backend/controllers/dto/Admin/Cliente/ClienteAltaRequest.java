@@ -22,6 +22,6 @@ public record ClienteAltaRequest(
         List<EmbarcacionAltaRequest> embarcaciones,
 
         // por ahora lo dejamos para más adelante
-        List<AutorizadoAltaRequest> autorizados
+        List<Long> embarcacionesIdsAutorizado
 ) {}
 
