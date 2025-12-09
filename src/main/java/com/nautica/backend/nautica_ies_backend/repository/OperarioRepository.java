@@ -1,6 +1,7 @@
 // src/main/java/com/nautica/backend/nautica_ies_backend/repository/OperarioRepository.java
 package com.nautica.backend.nautica_ies_backend.repository;
 
+import java.util.List; 
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -15,6 +16,9 @@ public interface OperarioRepository extends JpaRepository<Operario, Long> {
     Optional<Operario> findByLegajo(String legajo);
 
     boolean existsByLegajo(String legajo);
+
+    // 🔹 NUEVO: como Operario extiende Usuario, "activo" viene de la superclase
+    List<Operario> findByActivoTrue();
 
     @Query("""
         SELECT o FROM Operario o

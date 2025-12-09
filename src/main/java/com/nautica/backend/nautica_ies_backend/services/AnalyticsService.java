@@ -41,6 +41,7 @@ import com.nautica.backend.nautica_ies_backend.models.Producto;
 import com.nautica.backend.nautica_ies_backend.models.Tarea;
 import com.nautica.backend.nautica_ies_backend.models.Turno;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoCuota;
+import com.nautica.backend.nautica_ies_backend.models.enums.EstadoPedido;
 import com.nautica.backend.nautica_ies_backend.models.enums.EstadoTarea;
 import com.nautica.backend.nautica_ies_backend.repository.AnuncioRepository;
 import com.nautica.backend.nautica_ies_backend.repository.CierreExcepcionalRepository;
@@ -578,7 +579,7 @@ public class AnalyticsService {
                 .toList();
 
         List<Pedido> pedidosPagados = pedidosRango.stream()
-                .filter(p -> "pagado".equalsIgnoreCase(p.getEstado()))
+                .filter(p -> EstadoPedido.entregado.name().equalsIgnoreCase(p.getEstado()))
                 .toList();
 
         // Ventas por día
