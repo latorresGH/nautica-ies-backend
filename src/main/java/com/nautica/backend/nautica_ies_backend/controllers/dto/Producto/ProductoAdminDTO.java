@@ -11,5 +11,6 @@ public record ProductoAdminDTO(
         String descripcion,
         String codigoAlmacenamiento,
         String estado,
-        Integer stock
+        Integer stock,
+        String imagenUrl
 ) {}

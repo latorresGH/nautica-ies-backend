@@ -5,11 +5,15 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Producto.ProductoAdminDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Producto.ProductoCreateUpdateRequest;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Producto.ActualizarStockRequest;
 import com.nautica.backend.nautica_ies_backend.services.ProductoService;
+
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/admin/productos")
@@ -65,4 +69,20 @@ public class ProductoAdminController {
         productoService.eliminarProducto(id);
         return ResponseEntity.noContent().build();
     }
+
+        @PostMapping("/{id}/imagen")
+    public ResponseEntity<ProductoAdminDTO> subirImagen(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            ProductoAdminDTO dto = productoService.guardarImagen(id, file);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

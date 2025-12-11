@@ -7,14 +7,30 @@ import com.nautica.backend.nautica_ies_backend.controllers.dto.Producto.Producto
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Producto.ProductoCreateUpdateRequest;
 import com.nautica.backend.nautica_ies_backend.models.Producto;
 import com.nautica.backend.nautica_ies_backend.repository.ProductoRepository;
-import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
+    
+    @Value("${app.upload-dir}")
+    private String uploadDir;
 
     public ProductoService(ProductoRepository productoRepository) {
         this.productoRepository = productoRepository;
@@ -36,7 +52,8 @@ public class ProductoService {
                 p.getPrecioUnitario(),
                 p.getCategoria(),
                 p.getDescripcion(),
-                p.getStock()
+                p.getStock(),
+                p.getImagenUrl()
         );
     }
 
@@ -112,7 +129,43 @@ public class ProductoService {
                 p.getDescripcion(),
                 p.getCodigoAlmacenamiento(),
                 p.getEstado(),
-                p.getStock()
+                p.getStock(),
+                p.getImagenUrl()
         );
     }
+
+
+     public ProductoAdminDTO guardarImagen(Long idProducto, MultipartFile file) throws IOException {
+        Producto producto = productoRepository.findById(idProducto)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id " + idProducto));
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("El archivo de imagen está vacío.");
+        }
+
+        String originalFilename = Objects.requireNonNull(file.getOriginalFilename(), "Nombre de archivo nulo");
+        String extension = "";
+
+        int dotIndex = originalFilename.lastIndexOf('.');
+        if (dotIndex >= 0) {
+            extension = originalFilename.substring(dotIndex);
+        }
+
+        String nombreArchivo = UUID.randomUUID() + extension;
+
+        // Carpeta física: uploads/productos/
+        Path carpeta = Paths.get(uploadDir, "productos").toAbsolutePath().normalize();
+        Files.createDirectories(carpeta);
+
+        Path destino = carpeta.resolve(nombreArchivo);
+        Files.copy(file.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+
+        // URL pública (como la ve el front)
+        String urlPublica = "/images/productos/" + nombreArchivo;
+        producto.setImagenUrl(urlPublica);
+
+        Producto guardado = productoRepository.save(producto);
+        return toAdminDTO(guardado);
+    }
 }
+

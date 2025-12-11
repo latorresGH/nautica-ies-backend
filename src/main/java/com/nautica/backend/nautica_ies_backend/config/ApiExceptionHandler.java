@@ -15,6 +15,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -94,33 +95,47 @@ public class ApiExceptionHandler {
     return ResponseEntity.status(status).body(body);
   }
 
-  //!HANDLER DE ERRORES PARA LA VERGA DE LOS TURNOS
-    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
-    public ResponseEntity<Map<String, Object>> handleTurnoErrors(RuntimeException ex,
-                                                                 HttpServletRequest req) {
+  // !HANDLER DE ERRORES PARA LA VERGA DE LOS TURNOS
+  @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
+  public ResponseEntity<Map<String, Object>> handleTurnoErrors(RuntimeException ex,
+      HttpServletRequest req) {
 
-        String code = ex.getMessage();
-        String userMessage = switch (code) {
-            case "TURNOS_HORA_POSTERIOR" ->
-                "La hora de fin debe ser posterior a la hora de inicio.";
-            case "TURNOS_EMBARCACION_SOLAPADOS" ->
-                "Turno con la embarcación ya solicitado en ese rango horario.";
-            case "TURNOS_CAP_GLOBAL" ->
-                "No hay más cupo disponible para ese horario.";
-            default ->
-                // si viene otra IllegalState/Argument con mensaje distinto
-                code;
-        };
+    String code = ex.getMessage();
+    String userMessage = switch (code) {
+      case "TURNOS_HORA_POSTERIOR" ->
+        "La hora de fin debe ser posterior a la hora de inicio.";
+      case "TURNOS_EMBARCACION_SOLAPADOS" ->
+        "Turno con la embarcación ya solicitado en ese rango horario.";
+      case "TURNOS_CAP_GLOBAL" ->
+        "No hay más cupo disponible para ese horario.";
+      default ->
+        // si viene otra IllegalState/Argument con mensaje distinto
+        code;
+    };
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", Instant.now().toString());
-        body.put("status", 400);
-        body.put("error", "Bad Request");
-        body.put("message", userMessage);
-        body.put("path", req.getRequestURI());
+    Map<String, Object> body = new HashMap<>();
+    body.put("timestamp", Instant.now().toString());
+    body.put("status", 400);
+    body.put("error", "Bad Request");
+    body.put("message", userMessage);
+    body.put("path", req.getRequestURI());
 
-        return ResponseEntity.badRequest().body(body);
-    }
+    return ResponseEntity.badRequest().body(body);
+  }
 
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<Map<String, Object>> handleMaxSizeException(
+      MaxUploadSizeExceededException ex,
+      HttpServletRequest request) {
+    Map<String, Object> body = new HashMap<>();
+    body.put("timestamp", Instant.now());
+    body.put("status", HttpStatus.PAYLOAD_TOO_LARGE.value());
+    body.put("error", "Archivo demasiado grande");
+    body.put("message", "La imagen supera el tamaño máximo permitido.");
+    body.put("path", request.getRequestURI());
 
+    return ResponseEntity
+        .status(HttpStatus.PAYLOAD_TOO_LARGE)
+        .body(body);
+  }
 }

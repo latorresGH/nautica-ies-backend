@@ -38,6 +38,9 @@ public class Producto {
     @Column(name = "stock")
     private Integer stock;
 
+    @Column(name = "imagen_url")
+    private String imagenUrl;
+
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<PedidoProducto> pedidosProductos = new ArrayList<>();
 
@@ -122,5 +125,14 @@ public class Producto {
     public void setPedidosProductos(List<PedidoProducto> pedidosProductos) {
         this.pedidosProductos = pedidosProductos;
     }
+
+        public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
+
 }
 

@@ -11,6 +11,7 @@ public record ProductoTienda(
         BigDecimal precioUnitario,
         String categoria,
         String descripcion,
-        Integer stock
+        Integer stock,
+        String imagenUrl
 ) {}
 
