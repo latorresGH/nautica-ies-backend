@@ -61,9 +61,20 @@ public class OperarioService {
         op.setLocalidad(req.localidad);
         op.setProvincia(req.provincia);
 
-        String raw = (req.contrasena != null && !req.contrasena.isBlank())
-                ? req.contrasena
-                : generarPasswordTemporal();
+        // 🔽 LÓGICA NUEVA PARA LA CONTRASEÑA
+        String raw;
+
+        if (req.contrasena != null && !req.contrasena.isBlank()) {
+            // Si el admin cargó una contraseña → usar esa
+            raw = req.contrasena;
+        } else if (req.dni != null && !req.dni.isBlank()) {
+            // Si no cargó contraseña → usar el DNI
+            raw = req.dni;
+        } else {
+            // Caso ultra extremo (dni nunca debería venir vacío por @NotBlank)
+            raw = generarPasswordTemporal();
+        }
+
         op.setContrasena(passwordEncoder.encode(raw));
 
         try {
