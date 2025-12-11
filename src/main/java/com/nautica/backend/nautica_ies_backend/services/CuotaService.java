@@ -23,6 +23,11 @@ import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoC
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Admin.Pagos.PagoHistorialDTO;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.DetalleCuotaEmbarcacion;
 import com.nautica.backend.nautica_ies_backend.controllers.dto.Cuota.ResumenCuotaMesCliente;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Objects;
+
 @Service
 public class CuotaService {
 
@@ -37,8 +42,7 @@ public class CuotaService {
             ClienteRepository clienteRepo,
             EmbarcacionRepository embarcacionRepo,
             TarifaCamaRepository tarifaRepo,
-            UsuarioEmbarcacionRepository usuarioEmbRepo
-    ) {
+            UsuarioEmbarcacionRepository usuarioEmbRepo) {
         this.repo = repo;
         this.clienteRepo = clienteRepo;
         this.embarcacionRepo = embarcacionRepo;
@@ -46,9 +50,11 @@ public class CuotaService {
         this.usuarioEmbRepo = usuarioEmbRepo;
     }
 
-    /* ===========================================================
+    /*
+     * ===========================================================
      * CRUD básico de Cuota
-     * =========================================================== */
+     * ===========================================================
+     */
 
     public Page<Cuota> listar(int page, int size, Sort sort) {
         return repo.findAll(PageRequest.of(page, size, sort));
@@ -90,6 +96,9 @@ public class CuotaService {
         if (c.getMonto() == null || c.getMonto().compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Monto inválido");
 
+        // 👇 NUEVO: inicializamos base y porcentaje
+        c.setMontoOriginal(c.getMonto());
+        c.setPorcentajeRecargo(0);
         try {
             return repo.save(c);
         } catch (DataIntegrityViolationException e) {
@@ -143,17 +152,18 @@ public class CuotaService {
         repo.deleteById(id);
     }
 
-    /* ===========================================================
+    /*
+     * ===========================================================
      * Cuotas: resumen cliente
-     * =========================================================== */
+     * ===========================================================
+     */
 
     public CuotaResumen cuotaActualPorCliente(Long clienteId) {
         return repo.findTopByCliente_IdUsuarioOrderByNumeroMesDesc(clienteId)
                 .map(c -> new CuotaResumen(
                         c.getNumeroMes(),
                         c.getMonto(),
-                        c.getEstadoCuota().name()
-                ))
+                        c.getEstadoCuota().name()))
                 .orElse(null);
     }
 
@@ -173,8 +183,7 @@ public class CuotaService {
                 .map(c -> new CuotaResumen(
                         c.getNumeroMes(),
                         c.getMonto(),
-                        c.getEstadoCuota().name()
-                ))
+                        c.getEstadoCuota().name()))
                 .toList();
     }
 
@@ -197,9 +206,11 @@ public class CuotaService {
     public static record DeudaCliente(long cuotasImpagas, BigDecimal totalImpago) {
     }
 
-    /* ===========================================================
+    /*
+     * ===========================================================
      * Tarifas + generación mensual
-     * =========================================================== */
+     * ===========================================================
+     */
 
     private BigDecimal obtenerPrecioMesParaEmbarcacion(Embarcacion emb, LocalDate mes) {
         if (emb.getTipoCama() == null) {
@@ -212,8 +223,7 @@ public class CuotaService {
         TarifaCama tarifa = tarifaRepo
                 .findTopByTipoCamaAndNumeroMesLessThanEqualOrderByNumeroMesDesc(
                         emb.getTipoCama(),
-                        mesNormalizado
-                )
+                        mesNormalizado)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No hay ninguna tarifa definida para tipo de cama " + emb.getTipoCama()
                                 + " en o antes del mes " + mesNormalizado));
@@ -264,6 +274,8 @@ public class CuotaService {
             cuota.setPeriodo(periodo);
             cuota.setNumeroPago(nextNumero);
             cuota.setMonto(precio);
+            cuota.setMontoOriginal(precio);
+            cuota.setPorcentajeRecargo(0);
             cuota.setEstadoCuota(EstadoCuota.pendiente);
             cuota.setFechaPago(null);
             cuota.setFormaPago(null);
@@ -275,36 +287,96 @@ public class CuotaService {
         return creadas;
     }
 
-    @Transactional(readOnly = true)
-    public ResumenCuotaMesCliente resumenCuotaMesCliente(Long clienteId, LocalDate mesParam) {
-        LocalDate mes = mesParam.withDayOfMonth(1);
+      @Transactional(readOnly = true)
+public ResumenCuotaMesCliente resumenCuotaMesCliente(Long clienteId, LocalDate mesParam) {
+    LocalDate mes = mesParam.withDayOfMonth(1);
 
-        var cuotasMes = repo.findByCliente_IdUsuarioAndNumeroMes(clienteId, mes);
-        if (cuotasMes.isEmpty()) {
-            return null;
-        }
-
-        var total = cuotasMes.stream()
-                .map(Cuota::getMonto)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        String periodo = cuotasMes.get(0).getPeriodo();
-
-        var detalles = cuotasMes.stream()
-                .map(c -> new DetalleCuotaEmbarcacion(
-                        c.getEmbarcacion().getIdEmbarcacion(),
-                        c.getEmbarcacion().getNombre(),
-                        c.getEmbarcacion().getTipoCama(),
-                        c.getMonto()
-                ))
-                .toList();
-
-        return new ResumenCuotaMesCliente(mes, periodo, total, detalles);
+    var cuotasMes = repo.findByCliente_IdUsuarioAndNumeroMes(clienteId, mes);
+    if (cuotasMes.isEmpty()) {
+        return null;
     }
 
-    /* ===========================================================
-     *  NUEVO: lógica para el panel ADMIN de pagos
-     * =========================================================== */
+    // 🔹 Solo consideramos las cuotas que NO están pagadas
+    var cuotasImpagasMes = cuotasMes.stream()
+            .filter(c -> c.getEstadoCuota() != EstadoCuota.pagada)
+            .toList();
+
+    // Si TODAS las cuotas del mes están pagadas, para este resumen "no hay deuda"
+    if (cuotasImpagasMes.isEmpty()) {
+        return null;
+    }
+
+    // total ACTUAL (ya con recargo aplicado) SOLO de impagas
+    var totalActual = cuotasImpagasMes.stream()
+            .map(Cuota::getMonto)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    // total BASE (sin recargo) usando monto_original SOLO de impagas
+    var totalBase = cuotasImpagasMes.stream()
+            .map(c -> c.getMontoOriginal() != null ? c.getMontoOriginal() : c.getMonto())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    // porcentaje máximo del mes (0, 10 o 20) SOLO de impagas
+    int porcMax = cuotasImpagasMes.stream()
+            .map(c -> c.getPorcentajeRecargo() != null ? c.getPorcentajeRecargo() : 0)
+            .max(Integer::compareTo)
+            .orElse(0);
+
+    String periodo = cuotasImpagasMes.get(0).getPeriodo();
+
+    var detalles = cuotasImpagasMes.stream()
+            .map(c -> new DetalleCuotaEmbarcacion(
+                    c.getEmbarcacion().getIdEmbarcacion(),
+                    c.getEmbarcacion().getNombre(),
+                    c.getEmbarcacion().getTipoCama(),
+                    c.getMonto()
+            ))
+            .toList();
+
+    return new ResumenCuotaMesCliente(
+            mes,
+            periodo,
+            totalActual,   // total SOLO de impagas
+            totalBase,     // base SOLO de impagas
+            porcMax,       // recargo SOLO de impagas
+            detalles
+    );
+}
+
+
+@Transactional(readOnly = true)
+public ResumenCuotaMesCliente resumenCuotaMesActualOPendiente(Long clienteId) {
+    LocalDate hoy = LocalDate.now();
+
+    // 1) Intentar mes actual
+    ResumenCuotaMesCliente actual = resumenCuotaMesCliente(clienteId, hoy);
+    if (actual != null) {
+        return actual;
+    }
+
+    // 2) Si no hay, buscar la PRIMERA cuota impaga (pendiente o vencida)
+    var estadosImpagos = List.of(EstadoCuota.pendiente, EstadoCuota.vencida);
+
+    var cuotasImpagas = repo.findByCliente_IdUsuarioAndEstadoCuotaInOrderByNumeroMesAsc(
+            clienteId,
+            estadosImpagos
+    );
+
+    if (cuotasImpagas.isEmpty()) {
+        return null; // no debe nada
+    }
+
+    LocalDate mesDeuda = cuotasImpagas.get(0).getNumeroMes();
+
+    return resumenCuotaMesCliente(clienteId, mesDeuda);
+}
+
+
+    /*
+     * ===========================================================
+     * NUEVO: lógica para el panel ADMIN de pagos
+     * ===========================================================
+     */
 
     private FormaPago parseFormaPago(String medioStr) {
         if (medioStr == null || medioStr.isBlank()) {
@@ -320,7 +392,7 @@ public class CuotaService {
     /**
      * Lista de cuotas IMPAGAS (pendientes o vencidas) con datos de embarcación.
      */
-        @Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<CuotaAdminDTO> listarCuotasImpagasPorCliente(Long clienteId) {
         var estadosImpagos = List.of(EstadoCuota.pendiente, EstadoCuota.vencida);
 
@@ -328,7 +400,7 @@ public class CuotaService {
                 .findByCliente_IdUsuarioAndEstadoCuotaInOrderByNumeroMesAsc(clienteId, estadosImpagos)
                 .stream()
                 .map(c -> {
-                    Embarcacion e = c.getEmbarcacion();   // puede venir null si hay datos viejos o rotos
+                    Embarcacion e = c.getEmbarcacion(); // puede venir null si hay datos viejos o rotos
 
                     Long idEmb = (e != null) ? e.getIdEmbarcacion() : null;
                     String nombreEmb = (e != null) ? e.getNombre() : null;
@@ -336,18 +408,16 @@ public class CuotaService {
 
                     return new CuotaAdminDTO(
                             c.getIdCuota(),
-                            c.getNumeroMes(),     // LocalDate, puede ser null y no pasa nada
-                            c.getPeriodo(),       // String, puede ser null para cuotas viejas
+                            c.getNumeroMes(), // LocalDate, puede ser null y no pasa nada
+                            c.getPeriodo(), // String, puede ser null para cuotas viejas
                             c.getMonto(),
                             c.getEstadoCuota(),
                             idEmb,
                             nombreEmb,
-                            matriculaEmb
-                    );
+                            matriculaEmb);
                 })
                 .toList();
     }
-
 
     /**
      * Marca como PAGADAS las cuotas indicadas en el request.
@@ -369,13 +439,11 @@ public class CuotaService {
         for (Cuota c : cuotas) {
             if (c.getCliente() == null || !c.getCliente().getIdUsuario().equals(req.clienteId())) {
                 throw new IllegalArgumentException(
-                        "La cuota " + c.getIdCuota() + " no pertenece al cliente indicado."
-                );
+                        "La cuota " + c.getIdCuota() + " no pertenece al cliente indicado.");
             }
             if (c.getEstadoCuota() == EstadoCuota.pagada) {
                 throw new IllegalArgumentException(
-                        "La cuota " + c.getIdCuota() + " ya está marcada como pagada."
-                );
+                        "La cuota " + c.getIdCuota() + " ya está marcada como pagada.");
             }
 
             c.setEstadoCuota(EstadoCuota.pagada);
@@ -387,30 +455,91 @@ public class CuotaService {
     }
 
     @Transactional(readOnly = true)
-public java.util.List<PagoHistorialDTO> historialPagosPorCliente(Long idCliente) {
+    public java.util.List<PagoHistorialDTO> historialPagosPorCliente(Long idCliente) {
 
-    // Reutilizamos la query existente buscarPagos():
-    var page = repo.buscarPagos(
-            idCliente,   // clienteId
-            null,        // desde
-            null,        // hasta
-            null,        // medio de pago
-            Pageable.unpaged()
-    );
+        // Reutilizamos la query existente buscarPagos():
+        var page = repo.buscarPagos(
+                idCliente, // clienteId
+                null, // desde
+                null, // hasta
+                null, // medio de pago
+                Pageable.unpaged());
 
-    return page.getContent().stream()
-            .map(c -> new PagoHistorialDTO(
-                    c.getIdCuota(),
-                    c.getPeriodo(),
-                    c.getNumeroMes(),              // LocalDate del mes
-                    c.getFechaPago(),
-                    c.getMonto(),
-                    c.getEmbarcacion() != null ? c.getEmbarcacion().getIdEmbarcacion() : null,
-                    c.getEmbarcacion() != null ? c.getEmbarcacion().getNombre() : null,
-                    c.getEmbarcacion() != null ? c.getEmbarcacion().getNumMatricula() : null,
-                    c.getFormaPago() != null ? c.getFormaPago().name() : null
-            ))
-            .toList();
+        return page.getContent().stream()
+                .map(c -> new PagoHistorialDTO(
+                        c.getIdCuota(),
+                        c.getPeriodo(),
+                        c.getNumeroMes(), // LocalDate del mes
+                        c.getFechaPago(),
+                        c.getMonto(),
+                        c.getEmbarcacion() != null ? c.getEmbarcacion().getIdEmbarcacion() : null,
+                        c.getEmbarcacion() != null ? c.getEmbarcacion().getNombre() : null,
+                        c.getEmbarcacion() != null ? c.getEmbarcacion().getNumMatricula() : null,
+                        c.getFormaPago() != null ? c.getFormaPago().name() : null))
+                .toList();
+    }
+
+    @Transactional
+public int aplicarRecargosMora(LocalDate hoy) {
+
+    var cuotas = repo.findAll();
+    int procesadas = 0;
+
+    for (Cuota c : cuotas) {
+
+        // No tocar cuotas pagadas
+        if (c.getEstadoCuota() == EstadoCuota.pagada) {
+            continue;
+        }
+
+        LocalDate fechaBase = c.getNumeroMes(); // ej: 2025-12-01
+        if (fechaBase == null) continue;
+
+        // Aseguramos que montoOriginal exista
+        BigDecimal base = c.getMontoOriginal();
+        if (base == null) {
+            base = c.getMonto();
+            if (base == null) continue;
+            c.setMontoOriginal(base);
+        }
+
+        // Aseguramos porcentajeRecargo
+        Integer recargoActual = c.getPorcentajeRecargo();
+        if (recargoActual == null) recargoActual = 0;
+
+        boolean pasa10dias = !hoy.isBefore(fechaBase.plusDays(10));
+        boolean pasa1mes   = !hoy.isBefore(fechaBase.plusMonths(1));
+
+        int nuevoPorcentaje = recargoActual;
+
+        if (pasa1mes && recargoActual < 20) {
+            nuevoPorcentaje = 20;
+            c.setEstadoCuota(EstadoCuota.vencida);
+        } else if (pasa10dias && recargoActual < 10) {
+            nuevoPorcentaje = 10;
+            c.setEstadoCuota(EstadoCuota.vencida);
+        }
+
+        if (nuevoPorcentaje != recargoActual) {
+            BigDecimal factor = switch (nuevoPorcentaje) {
+                case 10 -> BigDecimal.valueOf(1.10);
+                case 20 -> BigDecimal.valueOf(1.20);
+                default -> BigDecimal.ONE;
+            };
+
+            BigDecimal nuevoMonto = base.multiply(factor)
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+
+            c.setMonto(nuevoMonto);
+            c.setPorcentajeRecargo(nuevoPorcentaje);
+
+            repo.save(c);
+            procesadas++;
+        }
+    }
+
+    return procesadas;
 }
+
 
 }

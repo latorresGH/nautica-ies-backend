@@ -44,6 +44,16 @@ public class Cuota {
     @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
 
+    
+    @NotNull
+    @Column(name = "monto_original", nullable = false, precision = 14, scale = 2)
+    private BigDecimal montoOriginal;
+
+    @NotNull
+    @Column(name = "porcentaje_recargo", nullable = false)
+    private Integer porcentajeRecargo = 0;
+
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_embarcacion", nullable = false)
     private Embarcacion embarcacion;
@@ -136,5 +146,21 @@ public class Cuota {
 
     public void setEstadoCuota(EstadoCuota estadoCuota) {
         this.estadoCuota = estadoCuota;
+    }
+
+        public BigDecimal getMontoOriginal() {
+        return montoOriginal;
+    }
+
+    public void setMontoOriginal(BigDecimal montoOriginal) {
+        this.montoOriginal = montoOriginal;
+    }
+
+    public Integer getPorcentajeRecargo() {
+        return porcentajeRecargo;
+    }
+
+    public void setPorcentajeRecargo(Integer porcentajeRecargo) {
+        this.porcentajeRecargo = porcentajeRecargo;
     }
 }

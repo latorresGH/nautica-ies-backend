@@ -579,7 +579,7 @@ public class AnalyticsService {
                 .toList();
 
         List<Pedido> pedidosPagados = pedidosRango.stream()
-                .filter(p -> EstadoPedido.entregado.name().equalsIgnoreCase(p.getEstado()))
+                .filter(p -> EstadoPedido.entregado_y_pagado.name().equalsIgnoreCase(p.getEstado()))
                 .toList();
 
         // Ventas por día

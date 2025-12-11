@@ -97,18 +97,24 @@ public class CuotaController {
     }
 
     // resumen del mes actual (vista cliente)
-    @GetMapping("/by-cliente/mes-actual-resumen")
-    public ResponseEntity<ResumenCuotaMesCliente> resumenMesActualCliente(
-            @RequestParam Long clienteId) {
+    // resumen del mes actual (vista cliente)
+@GetMapping("/by-cliente/mes-actual-resumen")
+public ResponseEntity<ResumenCuotaMesCliente> resumenMesActualCliente(
+        @RequestParam Long clienteId) {
 
-        LocalDate hoy = LocalDate.now();
-        var dto = service.resumenCuotaMesCliente(clienteId, hoy);
+    // ANTES:
+    // LocalDate hoy = LocalDate.now();
+    // var dto = service.resumenCuotaMesCliente(clienteId, hoy);
 
-        if (dto == null) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(dto);
+    // AHORA: usa el método que devuelve mes actual O el mes de deuda
+    var dto = service.resumenCuotaMesActualOPendiente(clienteId);
+
+    if (dto == null) {
+        return ResponseEntity.noContent().build();
     }
+    return ResponseEntity.ok(dto);
+}
+
 
     /* ===========================================================
      *  NUEVO: endpoints ADMIN para registrar pagos

@@ -33,6 +33,15 @@ public class PedidoAdminService {
         this.clienteRepository = clienteRepository;
     }
 
+
+    private boolean esEstadoEntregado(String estado) {
+    if (estado == null) return false;
+    estado = estado.toLowerCase();
+    return
+            "entregado_y_pagado".equals(estado) ||
+            "entregado_sin_pagar".equals(estado);
+}
+
     /* ===========================================================
      *   1) LISTAR PEDIDOS (resumen para la tabla del admin)
      *      → PAGINADO
@@ -112,33 +121,38 @@ public class PedidoAdminService {
      *   agregar lógica extra si querés reactivar pedidos).
      */
     private void actualizarStockPorCambioEstado(Pedido pedido, String estadoAnterior, String nuevoEstado) {
-        if (pedido.getItems() == null || pedido.getItems().isEmpty()) {
+    if (pedido.getItems() == null || pedido.getItems().isEmpty()) {
+        return;
+    }
+
+    // Normalizamos por las dudas
+    estadoAnterior = Optional.ofNullable(estadoAnterior).orElse("pendiente").toLowerCase();
+    nuevoEstado   = Optional.ofNullable(nuevoEstado).orElse("pendiente").toLowerCase();
+
+    // De NO cancelado → cancelado
+    if (!"cancelado".equals(estadoAnterior) && "cancelado".equals(nuevoEstado)) {
+
+        // Si antes ya estaba entregado (cualquiera de las variantes), no tocamos stock
+        if (esEstadoEntregado(estadoAnterior)) {
             return;
         }
 
-        // De NO cancelado → cancelado
-        if (!"cancelado".equals(estadoAnterior) && "cancelado".equals(nuevoEstado)) {
+        // Antes NO era entregado → devolución de stock
+        for (PedidoProducto item : pedido.getItems()) {
+            Producto producto = item.getProducto();
+            if (producto == null) continue;
 
-            // Si antes ya estaba "entregado", no tocamos stock
-            if ("entregado".equals(estadoAnterior)) {
-                return;
-            }
+            int stockActual = Optional.ofNullable(producto.getStock()).orElse(0);
+            int cantidad = Optional.ofNullable(item.getCantidad()).orElse(0);
 
-            for (PedidoProducto item : pedido.getItems()) {
-                Producto producto = item.getProducto();
-                if (producto == null) continue;
-
-                int stockActual = Optional.ofNullable(producto.getStock()).orElse(0);
-                int cantidad = Optional.ofNullable(item.getCantidad()).orElse(0);
-
-                producto.setStock(stockActual + cantidad);
-            }
+            producto.setStock(stockActual + cantidad);
         }
-
-        // Si algún día querés permitir reactivar pedidos cancelados, acá podrías hacer:
-        // if ("cancelado".equals(estadoAnterior) && !"cancelado".equals(nuevoEstado)) { ... }
-        // y volver a descontar stock si hay disponibilidad.
     }
+
+    // Si algún día permitimos reactivar pedidos cancelados, acá va la lógica inversa
+    // if ("cancelado".equals(estadoAnterior) && !"cancelado".equals(nuevoEstado)) { ... }
+}
+
 
     /* ===========================================================
      *   4) MAPPERS
